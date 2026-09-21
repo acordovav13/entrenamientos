@@ -59,7 +59,11 @@ jobs:
             echo "::endgroup::"
           done
 
+      # enablement activa Pages desde el propio workflow. Sin esto, el primer push a
+      # un repositorio nuevo falla porque Pages todavia no esta configurado a mano.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
