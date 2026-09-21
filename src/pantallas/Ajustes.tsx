@@ -106,6 +106,21 @@ export default function Ajustes() {
           </p>
         </div>
 
+        {/* Las versiones viven en el mismo origen, asi que comparten IndexedDB:
+            se puede saltar entre ellas sin perder ni duplicar el historial. */}
+        {import.meta.env.PROD && (
+          <div className="grupo">
+            <h2>Comparar versiones</h2>
+            <p>
+              Estás en la v{__VERSION__}. Las versiones publicadas comparten el mismo historial,
+              así que puedes saltar entre ellas y seguir donde ibas.
+            </p>
+            <a className="btn secundario" href={`${import.meta.env.BASE_URL}v0.1/`}>
+              Abrir la v0.1
+            </a>
+          </div>
+        )}
+
         {/* Solo en desarrollo: sirve para juzgar la app llena, no para el uso real. */}
         {import.meta.env.DEV && (
           <div className="grupo">

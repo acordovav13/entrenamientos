@@ -20,6 +20,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icono-192.png', 'icono-512.png'],
+      workbox: {
+        // Las versiones anteriores se publican en subcarpetas tipo /v0.1/, que caen
+        // dentro del alcance de este service worker. Sin esta excepcion servirian
+        // el index.html de la version actual y nunca veriamos la antigua.
+        navigateFallbackDenylist: [/\/v\d+\.\d+\//],
+      },
       manifest: {
         name: 'Entrenamientos',
         short_name: 'Entrenos',

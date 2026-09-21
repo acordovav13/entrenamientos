@@ -600,6 +600,14 @@ select:focus {
   opacity: 0.4;
 }
 
+/* El salto entre versiones es un enlace de verdad, no un boton con onClick. */
+a.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .btn.secundario {
   background: var(--superficie-2);
   color: var(--texto);
