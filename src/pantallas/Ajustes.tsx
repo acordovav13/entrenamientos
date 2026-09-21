@@ -52,7 +52,10 @@ export default function Ajustes() {
   return (
     <>
       <div className="cabecera">
-        <h1>Ajustes</h1>
+        <div className="cabecera-fila">
+          <h1 style={{ flex: 1 }}>Ajustes</h1>
+          <span className="pastilla">v{__VERSION__}</span>
+        </div>
         <div className="sub">
           {cuentas
             ? `${cuentas.ejercicios} ejercicios en ${cuentas.rutinas} rutinas`

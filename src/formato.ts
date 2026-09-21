@@ -29,6 +29,28 @@ export function fechaCorta(iso: string): string {
   return mayuscula(corto.format(aFecha(iso)).replace(/\./g, ''))
 }
 
+/** Dias de diferencia con hoy: negativo es pasado, positivo es futuro. */
+export function diasDesdeHoy(iso: string): number {
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const d = aFecha(iso)
+  return Math.round((d.getTime() - hoy.getTime()) / 86400000)
+}
+
+/** "Hoy", "Ayer", "Mañana" o nada, para acompañar a la fecha larga. */
+export function etiquetaDia(iso: string): string | null {
+  switch (diasDesdeHoy(iso)) {
+    case 0:
+      return 'Hoy'
+    case -1:
+      return 'Ayer'
+    case 1:
+      return 'Mañana'
+    default:
+      return null
+  }
+}
+
 export function numero(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ',')
 }

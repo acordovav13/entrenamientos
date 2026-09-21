@@ -63,6 +63,25 @@ export const IconoCheck = ({ size = 18 }: Props) => (
   </svg>
 )
 
+export const IconoDerecha = ({ size = 18 }: Props) => (
+  <svg {...base(size)} aria-hidden="true">
+    <path d="m9 18 6-6-6-6" />
+  </svg>
+)
+
+export const IconoAtras = ({ size = 20 }: Props) => (
+  <svg {...base(size)} aria-hidden="true">
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+)
+
+export const IconoCalendario = ({ size = 18 }: Props) => (
+  <svg {...base(size)} aria-hidden="true">
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M3 10h18M8 3v4M16 3v4" />
+  </svg>
+)
+
 export const IconoAjustar = ({ size = 16 }: Props) => (
   <svg {...base(size)} aria-hidden="true">
     <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" />

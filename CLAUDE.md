@@ -77,13 +77,31 @@ Pocas pantallas, poca fricción, nada de funciones de más.
 
 ---
 
+## Versiones
+
+El usuario prueba varias versiones `0.x` antes de elegir cuál mandar a producción
+(usarla de verdad en el gimnasio). La `1.0` se declara después de evaluar las `0.x`,
+usar la elegida al menos dos semanas, y corregir lo que aparezca.
+
+- Cada versión se marca con un tag de git (`v0.1`, `v0.2`, ...).
+- `package.json` lleva el número y Vite lo inyecta como `__VERSION__`.
+- La versión se muestra en la cabecera de **Ajustes**, para saber cuál estás usando.
+
+| Versión | Qué trae | Estado |
+| --- | --- | --- |
+| v0.1 | Registro, historial de solo lectura, PWA, respaldo manual | Etiquetada |
+| v0.2 | Días separados en tarjetas, editar cualquier día, planificar días futuros | Actual |
+| v1.0 | La `0.x` elegida, tras dos semanas de uso real y sus correcciones | Pendiente |
+
+---
+
 ## Plan por fases
 
 | Fase | Qué incluye | Estado |
 | --- | --- | --- |
 | 0 | Diseño y decisiones | ✅ Cerrada |
 | 1 | Registrar y ver: pestaña Hoy completa, historial en lista, PWA, respaldo manual | ✅ Cerrada |
-| 2 | Historial completo: calendario, progreso por ejercicio, edición de días pasados | ⬜ Siguiente |
+| 2 | Historial completo: calendario, progreso por ejercicio, edición de días pasados | 🔸 Parcial: la edición de cualquier día ya entró en la v0.2. Faltan calendario y gráfico |
 | 3 | Google Drive: setup de OAuth y sincronización automática local-primero | ⬜ |
 | 4 | Pulido según lo que moleste al usarla (plantillas, densidad, temporizador, notas) | ⬜ |
 
@@ -91,7 +109,24 @@ Pocas pantallas, poca fricción, nada de funciones de más.
 
 ## Estado actual
 
-**Fase 1: CERRADA.** La app funciona de punta a punta en local.
+**v0.2 lista, sin publicar todavía.** El repositorio en GitHub
+(`acordovav13/entrenamientos`, público) está creado pero aún vacío: falta el primer push.
+
+### Lo que trae la v0.2
+- **Historial mucho más separado**: cada día es una tarjeta con su cabecera, y las
+  rutinas dentro quedan en bandas distintas. Antes solo los dividía una línea fina.
+- **Cualquier día es editable**: tocas un día del historial y se abre con la misma
+  interfaz de "Hoy". El editor de día se extrajo a `componentes/EditorDia.tsx` y lo
+  comparten las dos vistas, para que nunca se separen.
+- **Días futuros planificables**: botón "Otro día" con atajos (hoy, mañana, pasado
+  mañana) y selector de fecha libre. Los días futuros salen en una sección
+  "Planificado" con borde punteado, sin marcas de completado.
+- **Rutina cerrada coherente**: antes las series no se dejaban marcar pero el menú ⋮
+  sí permitía cambiar los kilos. Ahora una rutina cerrada está cerrada del todo, y
+  una banda explica el bloqueo y la reabre de un toque.
+- Número de versión visible en Ajustes.
+
+### Lo que quedó hecho en la fase 1 (v0.1)
 
 ### Lo que quedó hecho en la fase 1
 - Pestaña **Hoy**: agregar ejercicio en 2 toques desde el autocompletado (3 si es nuevo),
@@ -110,4 +145,7 @@ Pocas pantallas, poca fricción, nada de funciones de más.
 ### Deuda conocida
 - La densidad es compacta según lo pedido, pero aún no se probó en el gimnasio.
   Si resulta apretada, en la fase 4 hay un interruptor de densidad.
-- El historial todavía no permite editar días pasados (es de la fase 2, ya decidido).
+- Faltan de la fase 2: calendario mensual y gráfico de progreso por ejercicio.
+- Cada origen tiene su propio IndexedDB, así que `localhost`, la IP de la red local y
+  GitHub Pages son historiales separados. Se resuelve en la fase 3 con Drive; mientras
+  tanto el puente es exportar/importar desde Ajustes.

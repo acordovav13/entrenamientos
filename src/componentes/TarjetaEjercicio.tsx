@@ -22,13 +22,17 @@ export default function TarjetaEjercicio({ ejercicio, bloqueado, onEditar }: Pro
         <span className={`progreso${completo ? ' listo' : ''}`}>
           {completo ? <IconoCheck size={16} /> : `${hechas}/${total}`}
         </span>
-        <button
-          className="icono-btn"
-          onClick={() => onEditar(ejercicio)}
-          aria-label={`Editar ${ejercicio.nombre}`}
-        >
-          <IconoPuntos />
-        </button>
+        {/* Una rutina cerrada esta cerrada del todo: antes se podian cambiar los
+            kilos desde aqui aunque las series no se dejaran marcar. */}
+        {!bloqueado && (
+          <button
+            className="icono-btn"
+            onClick={() => onEditar(ejercicio)}
+            aria-label={`Editar ${ejercicio.nombre}`}
+          >
+            <IconoPuntos />
+          </button>
+        )}
       </div>
 
       {ejercicio.tipo === 'cardio' ? (
