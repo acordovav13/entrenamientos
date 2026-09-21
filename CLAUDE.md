@@ -53,8 +53,10 @@ Pocas pantallas, poca fricción, nada de funciones de más.
 - **De solo lectura.** El pasado se mira, no se toca (revertido en la v0.3; en la v0.2 era editable).
 
 ### Estética
-- Tema **oscuro** fijo, en grises cálidos (`#1a1817`) con acento verde salvia (`#85bd8e`).
-  Nada de gris azulado ni acentos de neón: la v0.3 se veía a herramienta de programación.
+- Tema **oscuro** fijo, base berenjena (`#191426`), que tiene tono propio en vez de
+  gris neutro. Dos acentos con significado: **ámbar** (`#f7a55c`) para lo que se toca
+  y **verde** (`#5fcf96`) para lo que ya hiciste. Ese contraste de dos colores es lo
+  que le da vida a la pantalla; con un solo acento quedaba gris.
 - Densidad **compacta**, con excepción: las fichas de serie y el botón de agregar
   se mantienen en 44px para usar con una mano. Las rutinas cerradas se compactan a
   una línea por ejercicio.
@@ -100,7 +102,8 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 | v0.1 | Registro, historial de solo lectura, PWA, respaldo manual | Etiquetada |
 | v0.2 | Días en tarjetas, historial editable, planificación desde Historial | Etiquetada |
 | v0.3 | Historial de solo lectura otra vez, repisa de días en Entrenar, varias rutinas por día sin cerrar ninguna | Etiquetada |
-| v0.4 | Paleta cálida, sin botón fijo ni etiqueta "En curso", rutinas cerradas compactas | Actual |
+| v0.4 | Paleta cálida gris, sin botón fijo ni etiqueta "En curso", rutinas cerradas compactas | Etiquetada |
+| v0.5 | Paleta berenjena con ámbar y verde: la v0.4 quedó demasiado gris | Actual |
 | v1.0 | La `0.x` elegida, tras dos semanas de uso real y sus correcciones | Pendiente |
 
 ---
@@ -119,10 +122,21 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 
 ## Estado actual
 
-**v0.4 lista, sin publicar todavía.** El repositorio en GitHub
+**v0.5 lista, sin publicar todavía.** El repositorio en GitHub
 (`acordovav13/entrenamientos`, público) está creado pero aún vacío: falta el primer push.
 
-### Lo que trae la v0.4
+### Lo que trae la v0.5
+- **Paleta con tono.** La v0.4 arregló lo "informático" pero se fue a grises neutros y
+  quedó apagada. Ahora la base es berenjena oscuro (`#191426`), con tono propio, y hay
+  **dos acentos con significado**: ámbar (`#f7a55c`) para lo que se toca y verde
+  (`#5fcf96`) para lo hecho. Tener dos colores es lo que quita la sensación de gris.
+- Contraste medido: nombres 15.8:1, verde de completado 8.2:1, ámbar de navegación
+  8.1:1, pestaña apagada 3.54:1.
+- El servidor de desarrollo **se reinicia solo al cambiar `package.json`**. El número de
+  versión se inyecta al arrancar, así que al subir de versión seguía mostrando la
+  anterior hasta reiniciar a mano, y eso confundía justo al comparar versiones.
+
+### Lo que trajo la v0.4
 - **Paleta cálida.** Fuera el gris azulado y el menta de neón, que se veían a
   herramienta de programación. Ahora grises cálidos (`#1a1817`) y un verde salvia
   apagado (`#85bd8e`). Contraste medido: texto 14.8:1, pestaña activa 6.8:1,

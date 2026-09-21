@@ -19,7 +19,7 @@ env:
   # Versiones antiguas que se publican en subcarpetas, para poder compararlas con
   # la actual usando el mismo historial. Separadas por espacios. Para dejar de
   # publicar una, se quita de aqui; para sumar otra, se agrega su tag.
-  VERSIONES_ANTERIORES: v0.1 v0.2 v0.3
+  VERSIONES_ANTERIORES: v0.1 v0.2 v0.3 v0.4
 
 jobs:
   construir:
