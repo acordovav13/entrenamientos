@@ -4,7 +4,7 @@ import { borrarTodo, db, exportar, hoyISO, importar } from '../db'
 import { cargarEjemplo } from '../ejemplo'
 
 /** Tiene que coincidir con VERSIONES_ANTERIORES de .github/workflows/deploy.yml. */
-const VERSIONES_ANTERIORES = ['v0.1', 'v0.2']
+const VERSIONES_ANTERIORES = ['v0.1', 'v0.2', 'v0.3']
 
 export default function Ajustes() {
   const archivo = useRef<HTMLInputElement>(null)

@@ -1,19 +1,21 @@
 :root {
-  --bg: #0d1117;
-  --superficie: #161b22;
-  --superficie-2: #1c232b;
-  --borde: #2a323c;
-  --texto: #e6edf3;
-  --tenue: #8b949e;
-  --acento: #2dd4a7;
-  --acento-oscuro: #1a8c6d;
-  --sobre-acento: #04231a;
-  --peligro: #f85149;
+  /* Grises calidos, sin el tinte azul de las herramientas de programacion, y un
+     verde salvia apagado en vez de un menta de neon. Calido y sobrio, no infantil. */
+  --bg: #1a1817;
+  --superficie: #242120;
+  --superficie-2: #2f2b29;
+  --borde: #433d39;
+  --texto: #f0eae5;
+  --tenue: #a79f9a;
+  --acento: #85bd8e;
+  --acento-oscuro: #5d9468;
+  --sobre-acento: #13251a;
+  --peligro: #e28472;
 
   /* Densidad compacta, pero nada que se toque con la mano sudada baja de 44px. */
   --toque: 44px;
   --nav: 56px;
-  --radio: 10px;
+  --radio: 12px;
 
   color-scheme: dark;
 }
@@ -163,7 +165,9 @@ select:focus {
   gap: 2px;
   padding: 10px 4px;
   color: var(--tenue);
-  opacity: 0.45;
+  /* Un nivel por debajo de lo elegido, pero sin bajar de ~3:1 de contraste:
+     mas apagado que esto no se lee en un gimnasio con poca luz. */
+  opacity: 0.6;
   box-shadow: inset 0 -2px 0 transparent;
   transition:
     opacity 120ms ease,
@@ -216,12 +220,7 @@ select:focus {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 12px 16px calc(var(--nav) + 90px);
-}
-
-/* Pantallas sin el boton flotante de agregar no necesitan reservarle sitio. */
-.contenido.sin-boton {
-  padding-bottom: calc(var(--nav) + 24px);
+  padding: 12px 16px calc(var(--nav) + 24px);
 }
 
 .nota {
@@ -266,33 +265,6 @@ select:focus {
   height: 20px;
 }
 
-/* --- Boton principal, fijo al alcance del pulgar --- */
-
-.agregar {
-  position: fixed;
-  left: 16px;
-  right: 16px;
-  bottom: calc(var(--nav) + 12px + env(safe-area-inset-bottom));
-  z-index: 9;
-  max-width: 688px;
-  margin: 0 auto;
-  height: 50px;
-  border-radius: var(--radio);
-  background: var(--acento);
-  color: var(--sobre-acento);
-  font-weight: 650;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 6px 20px rgb(0 0 0 / 0.45);
-}
-
-.agregar:active {
-  background: var(--acento-oscuro);
-}
-
 /* --- Rutinas --- */
 
 .rutina {
@@ -303,8 +275,11 @@ select:focus {
   overflow: hidden;
 }
 
+/* Una rutina cerrada se hunde en el fondo en vez de solo perder opacidad, y sus
+   ejercicios pasan a una linea cada uno. Se distingue de lejos y ocupa un cuarto. */
 .rutina.cerrada {
-  opacity: 0.72;
+  background: color-mix(in srgb, var(--superficie) 55%, var(--bg));
+  border-color: color-mix(in srgb, var(--borde) 55%, transparent);
 }
 
 .rutina-cab {
@@ -313,6 +288,12 @@ select:focus {
   gap: 8px;
   padding: 8px 8px 8px 12px;
   border-bottom: 1px solid var(--borde);
+}
+
+.rutina.cerrada .rutina-cab {
+  padding: 5px 8px 5px 12px;
+  border-bottom-color: color-mix(in srgb, var(--borde) 55%, transparent);
+  color: var(--tenue);
 }
 
 .rutina-cab input {
@@ -324,25 +305,62 @@ select:focus {
   font-size: 15px;
 }
 
+.rutina-cab input:disabled {
+  color: var(--tenue);
+  opacity: 1;
+}
+
 .rutina-cab input::placeholder {
   color: var(--tenue);
   font-weight: 400;
 }
 
-.etiqueta {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--tenue);
+.abrir-cerrar {
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 0 12px;
   border: 1px solid var(--borde);
-  border-radius: 999px;
-  padding: 3px 8px;
-  white-space: nowrap;
+  border-radius: 8px;
+  color: var(--tenue);
+  font-size: 12.5px;
+  font-weight: 550;
 }
 
-.etiqueta.viva {
-  color: var(--acento);
-  border-color: var(--acento-oscuro);
+.abrir-cerrar:active {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+
+.ejercicio-cerrado {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--borde) 35%, transparent);
+}
+
+.ejercicio-cerrado:last-child {
+  border-bottom: none;
+}
+
+.ejercicio-cerrado .nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.ejercicio-cerrado.pendiente .nombre {
+  color: var(--tenue);
+}
+
+.ejercicio-cerrado .datos {
+  font-size: 13px;
+  color: var(--tenue);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* Cada rutina abierta recibe lo suyo: sin esto habia que cerrar las demas rutinas
@@ -382,26 +400,6 @@ select:focus {
 .nueva-rutina:active {
   border-color: var(--acento-oscuro);
   color: var(--acento);
-}
-
-.cerrojo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  width: 100%;
-  min-height: var(--toque);
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--borde);
-  background: var(--superficie-2);
-  color: var(--tenue);
-  font-size: 12.5px;
-  text-align: center;
-}
-
-.cerrojo:active {
-  background: var(--borde);
-  color: var(--texto);
 }
 
 /* --- Ejercicio --- */
@@ -898,6 +896,15 @@ a.btn {
   font-size: 16px;
   margin-bottom: 6px;
   font-weight: 600;
+}
+
+.vacio .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 250px;
+  margin: 20px auto 0;
 }
 
 /* --- Ajustes --- */

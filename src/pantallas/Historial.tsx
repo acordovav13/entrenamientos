@@ -111,7 +111,7 @@ export default function Historial() {
         </div>
       </div>
 
-      <div className="contenido sin-boton">
+      <div className="contenido">
         {dias === undefined ? null : dias.length === 0 ? (
           <div className="vacio">
             <strong>Aún no hay entrenamientos</strong>

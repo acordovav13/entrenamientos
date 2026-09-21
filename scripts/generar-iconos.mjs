@@ -6,8 +6,8 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..')
-const FONDO = [0x2d, 0xd4, 0xa7]
-const TRAZO = [0x0a, 0x1a, 0x16]
+const FONDO = [0x85, 0xbd, 0x8e]
+const TRAZO = [0x16, 0x26, 0x1a]
 
 const tablaCrc = Array.from({ length: 256 }, (_, n) => {
   let c = n

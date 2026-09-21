@@ -53,9 +53,11 @@ Pocas pantallas, poca fricción, nada de funciones de más.
 - **De solo lectura.** El pasado se mira, no se toca (revertido en la v0.3; en la v0.2 era editable).
 
 ### Estética
-- Tema **oscuro** fijo. Acento verde menta `#2dd4a7`.
+- Tema **oscuro** fijo, en grises cálidos (`#1a1817`) con acento verde salvia (`#85bd8e`).
+  Nada de gris azulado ni acentos de neón: la v0.3 se veía a herramienta de programación.
 - Densidad **compacta**, con excepción: las fichas de serie y el botón de agregar
-  se mantienen en 44px para usar con una mano.
+  se mantienen en 44px para usar con una mano. Las rutinas cerradas se compactan a
+  una línea por ejercicio.
 
 ### Primer uso y estados vacíos
 - Sin onboarding, sin tour, sin pedir datos. Se entra directo a Entrenar, en el día de hoy.
@@ -87,7 +89,7 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 - Cada versión se marca con un tag de git (`v0.1`, `v0.2`, ...).
 - `package.json` lleva el número y Vite lo inyecta como `__VERSION__`.
 - La versión se muestra en la cabecera de **Ajustes**, para saber cuál estás usando.
-- Las versiones anteriores se publican en subcarpetas (`/v0.1/`, `/v0.2/`). Se listan
+- Las versiones anteriores se publican en subcarpetas (`/v0.1/`, `/v0.2/`, ...). Se listan
   en `VERSIONES_ANTERIORES` del workflow y en `VERSIONES_ANTERIORES` de `Ajustes.tsx`:
   las dos listas tienen que coincidir.
 - Como IndexedDB se guarda por origen y no por ruta, **todas las versiones publicadas
@@ -97,7 +99,8 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 | --- | --- | --- |
 | v0.1 | Registro, historial de solo lectura, PWA, respaldo manual | Etiquetada |
 | v0.2 | Días en tarjetas, historial editable, planificación desde Historial | Etiquetada |
-| v0.3 | Historial de solo lectura otra vez, repisa de días en Entrenar, varias rutinas por día sin cerrar ninguna | Actual |
+| v0.3 | Historial de solo lectura otra vez, repisa de días en Entrenar, varias rutinas por día sin cerrar ninguna | Etiquetada |
+| v0.4 | Paleta cálida, sin botón fijo ni etiqueta "En curso", rutinas cerradas compactas | Actual |
 | v1.0 | La `0.x` elegida, tras dos semanas de uso real y sus correcciones | Pendiente |
 
 ---
@@ -116,10 +119,24 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 
 ## Estado actual
 
-**v0.3 lista, sin publicar todavía.** El repositorio en GitHub
+**v0.4 lista, sin publicar todavía.** El repositorio en GitHub
 (`acordovav13/entrenamientos`, público) está creado pero aún vacío: falta el primer push.
 
-### Lo que trae la v0.3
+### Lo que trae la v0.4
+- **Paleta cálida.** Fuera el gris azulado y el menta de neón, que se veían a
+  herramienta de programación. Ahora grises cálidos (`#1a1817`) y un verde salvia
+  apagado (`#85bd8e`). Contraste medido: texto 14.8:1, pestaña activa 6.8:1,
+  pestaña apagada 3.96:1.
+- **Sin botón fijo de agregar.** Quedaba redundante con el pie de cada rutina y el
+  botón de nueva rutina. En un día vacío el botón vive dentro del estado vacío.
+- **Sin etiqueta "En curso".** Como ya no hay botón fijo, no hay ninguna rutina
+  privilegiada: cada agregado dice explícitamente en cuál cae.
+- **Rutinas cerradas compactas y distintas.** Se hunden en el fondo en vez de solo
+  perder opacidad, llevan candado, y sus ejercicios pasan a una línea cada uno.
+  Ocupan un 64% menos. Se fue la nota "Rutina cerrada…"; reabrir sigue estando en
+  el botón de la cabecera.
+
+### Lo que trajo la v0.3
 - **Pestaña "Hoy" renombrada a "Entrenar"**, porque ya no solo muestra hoy: desde ahí
   se registra el día actual y se planifican los siguientes.
 - **Repisa de días** en Entrenar: hoy, mañana, pasado y el día siguiente a un toque,

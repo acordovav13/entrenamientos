@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { defineConfig } from 'vite'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { defineConfig, type ViteDevServer } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
@@ -10,12 +12,29 @@ const base = process.env.VITE_BASE || '/'
 // La version se muestra dentro de la app, para saber cual estas usando al comparar.
 const { version } = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
+/**
+ * __VERSION__ se inyecta al arrancar, leyendo package.json una sola vez, asi que
+ * al subir de version el servidor seguia mostrando la anterior hasta reiniciarlo
+ * a mano. Esto lo reinicia solo.
+ */
+const vigilarVersion = {
+  name: 'vigilar-version',
+  configureServer(servidor: ViteDevServer) {
+    const archivo = resolve(dirname(fileURLToPath(import.meta.url)), 'package.json')
+    servidor.watcher.add(archivo)
+    servidor.watcher.on('change', (cambiado) => {
+      if (resolve(cambiado) === archivo) servidor.restart()
+    })
+  },
+}
+
 export default defineConfig({
   base,
   define: {
     __VERSION__: JSON.stringify(version),
   },
   plugins: [
+    vigilarVersion,
     react(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -35,8 +54,8 @@ export default defineConfig({
         scope: base,
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#0d1117',
-        theme_color: '#0d1117',
+        background_color: '#1a1817',
+        theme_color: '#1a1817',
         icons: [
           { src: 'icono-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icono-512.png', sizes: '512x512', type: 'image/png' },

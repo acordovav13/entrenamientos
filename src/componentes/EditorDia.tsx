@@ -26,8 +26,8 @@ interface Props {
   fecha: string
 }
 
-/** Donde cae el ejercicio que se esta agregando: una rutina concreta, una nueva, o la activa. */
-type Destino = string | 'nueva' | 'activa'
+/** Donde cae el ejercicio que se esta agregando: una rutina concreta o una nueva. */
+type Destino = string | 'nueva'
 
 export default function EditorDia({ fecha }: Props) {
   const [agregandoEn, setAgregandoEn] = useState<Destino | null>(null)
@@ -47,13 +47,7 @@ export default function EditorDia({ fecha }: Props) {
     [] as string[],
   )
 
-  // La activa es la ultima abierta: es la que recibe lo del boton grande de abajo.
-  const idActiva = dia?.filter((d) => !d.rutina.cerrada).at(-1)?.rutina.id
-  const textoAgregar = esFuturo ? 'Planificar ejercicio' : 'Agregar ejercicio'
-
-  const alAgregar = async (datos: NuevoEjercicio) => {
-    await agregarEjercicio(fecha, datos, agregandoEn === 'activa' ? undefined : agregandoEn!)
-  }
+  const verbo = esFuturo ? 'Planificar' : 'Agregar'
 
   return (
     <>
@@ -61,13 +55,17 @@ export default function EditorDia({ fecha }: Props) {
         {dia === undefined ? null : dia.length === 0 ? (
           <div className="vacio">
             <strong>{esFuturo ? 'Día sin planificar' : 'Sin ejercicios todavía'}</strong>
-            Toca "{textoAgregar}" y la rutina empieza sola.
+            La rutina empieza sola con el primer ejercicio.
+            <button className="btn" onClick={() => setAgregandoEn('nueva')}>
+              <IconoMas size={17} /> {verbo} ejercicio
+            </button>
           </div>
         ) : (
           <>
             {dia.map(({ rutina, ejercicios }) => (
               <section key={rutina.id} className={`rutina${rutina.cerrada ? ' cerrada' : ''}`}>
                 <header className="rutina-cab">
+                  {rutina.cerrada && <IconoCandado size={13} />}
                   {/* Se guarda en cada tecla, no al salir del campo: si cierras la app
                       a mitad de escribir el nombre, igual queda guardado. */}
                   <input
@@ -75,36 +73,16 @@ export default function EditorDia({ fecha }: Props) {
                     defaultValue={rutina.nombre ?? ''}
                     placeholder={dia.length > 1 ? `Rutina ${rutina.orden + 1}` : 'Sin nombre'}
                     onChange={(e) => renombrarRutina(rutina.id, e.target.value)}
+                    disabled={rutina.cerrada}
                     aria-label="Nombre de la rutina"
                   />
-                  {rutina.cerrada ? (
-                    <span className="etiqueta">
-                      <IconoCandado size={11} /> Cerrada
-                    </span>
-                  ) : rutina.id === idActiva ? (
-                    // Solo una rutina lleva la marca viva, para que se sepa donde cae
-                    // lo que agregues con el boton grande.
-                    <span className="etiqueta viva">{esFuturo ? 'Planificada' : 'En curso'}</span>
-                  ) : (
-                    <span className="etiqueta">Abierta</span>
-                  )}
                   <button
-                    className="icono-btn"
-                    style={{ width: 'auto', padding: '0 10px', fontSize: 13 }}
+                    className="abrir-cerrar"
                     onClick={() => cerrarRutina(rutina.id, !rutina.cerrada)}
                   >
                     {rutina.cerrada ? 'Reabrir' : 'Cerrar'}
                   </button>
                 </header>
-
-                {/* Sin esto, tocar una serie de una rutina cerrada no hacia nada y no
-                    se entendia por que. Ahora el bloqueo se explica y se levanta de un toque. */}
-                {rutina.cerrada && ejercicios.length > 0 && (
-                  <button className="cerrojo" onClick={() => cerrarRutina(rutina.id, false)}>
-                    <IconoCandado size={13} />
-                    Rutina cerrada. Tócala para reabrirla y editarla.
-                  </button>
-                )}
 
                 {ejercicios.length === 0 ? (
                   <div className="ejercicio">
@@ -131,7 +109,7 @@ export default function EditorDia({ fecha }: Props) {
                 {/* Cada rutina abierta recibe lo suyo sin que haya que cerrar las demas. */}
                 {!rutina.cerrada && ejercicios.length > 0 && (
                   <button className="pie-rutina" onClick={() => setAgregandoEn(rutina.id)}>
-                    <IconoMas size={15} /> Agregar a esta rutina
+                    <IconoMas size={15} /> {verbo} en esta rutina
                   </button>
                 )}
               </section>
@@ -150,12 +128,11 @@ export default function EditorDia({ fecha }: Props) {
         </datalist>
       </div>
 
-      <button className="agregar" onClick={() => setAgregandoEn('activa')}>
-        <IconoMas size={18} /> {textoAgregar}
-      </button>
-
       {agregandoEn && (
-        <HojaAgregar onCerrar={() => setAgregandoEn(null)} onAgregar={alAgregar} />
+        <HojaAgregar
+          onCerrar={() => setAgregandoEn(null)}
+          onAgregar={(datos: NuevoEjercicio) => agregarEjercicio(fecha, datos, agregandoEn)}
+        />
       )}
 
       {editando && (
