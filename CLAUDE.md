@@ -42,14 +42,15 @@ Pocas pantallas, poca fricción, nada de funciones de más.
 - **Nombre de rutina opcional**, con autocompletado ("Pierna", "Empuje", "Corrida").
 
 ### Pantallas
-- Tres pestañas fijas abajo: **Hoy / Historial / Ajustes**. Abre siempre en "Hoy".
+- Tres pestañas fijas abajo: **Entrenar / Historial / Ajustes**. Abre siempre en Entrenar,
+  mostrando hoy. Desde ahí también se planifican los días siguientes.
 
 ### Historial
 - Lista cronológica por día (base).
 - Progreso por ejercicio, con gráfico simple de peso y reps en el tiempo.
 - Calendario mensual con marca en los días entrenados.
 - **Sin rachas ni totales motivacionales.**
-- Se puede editar y corregir **cualquier día pasado**.
+- **De solo lectura.** El pasado se mira, no se toca (revertido en la v0.3; en la v0.2 era editable).
 
 ### Estética
 - Tema **oscuro** fijo. Acento verde menta `#2dd4a7`.
@@ -57,9 +58,9 @@ Pocas pantallas, poca fricción, nada de funciones de más.
   se mantienen en 44px para usar con una mano.
 
 ### Primer uso y estados vacíos
-- Sin onboarding, sin tour, sin pedir datos. Se entra directo a "Hoy".
-- Hoy vacío: un solo botón grande "Agregar ejercicio".
-- Historial vacío: "Aún no hay entrenamientos. Lo que registres en Hoy aparecerá acá."
+- Sin onboarding, sin tour, sin pedir datos. Se entra directo a Entrenar, en el día de hoy.
+- Día vacío: un solo botón grande "Agregar ejercicio" ("Planificar ejercicio" si es futuro).
+- Historial vacío: "Aún no hay entrenamientos. Lo que registres en Entrenar aparecerá acá."
 - Sin historial, "Agregar ejercicio" salta directo al formulario: no hay nada que sugerir.
 
 ### Persistencia
@@ -86,11 +87,17 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 - Cada versión se marca con un tag de git (`v0.1`, `v0.2`, ...).
 - `package.json` lleva el número y Vite lo inyecta como `__VERSION__`.
 - La versión se muestra en la cabecera de **Ajustes**, para saber cuál estás usando.
+- Las versiones anteriores se publican en subcarpetas (`/v0.1/`, `/v0.2/`). Se listan
+  en `VERSIONES_ANTERIORES` del workflow y en `VERSIONES_ANTERIORES` de `Ajustes.tsx`:
+  las dos listas tienen que coincidir.
+- Como IndexedDB se guarda por origen y no por ruta, **todas las versiones publicadas
+  comparten el mismo historial**. La comparación es con los mismos datos.
 
 | Versión | Qué trae | Estado |
 | --- | --- | --- |
 | v0.1 | Registro, historial de solo lectura, PWA, respaldo manual | Etiquetada |
-| v0.2 | Días separados en tarjetas, editar cualquier día, planificar días futuros | Actual |
+| v0.2 | Días en tarjetas, historial editable, planificación desde Historial | Etiquetada |
+| v0.3 | Historial de solo lectura otra vez, repisa de días en Entrenar, varias rutinas por día sin cerrar ninguna | Actual |
 | v1.0 | La `0.x` elegida, tras dos semanas de uso real y sus correcciones | Pendiente |
 
 ---
@@ -100,8 +107,8 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 | Fase | Qué incluye | Estado |
 | --- | --- | --- |
 | 0 | Diseño y decisiones | ✅ Cerrada |
-| 1 | Registrar y ver: pestaña Hoy completa, historial en lista, PWA, respaldo manual | ✅ Cerrada |
-| 2 | Historial completo: calendario, progreso por ejercicio, edición de días pasados | 🔸 Parcial: la edición de cualquier día ya entró en la v0.2. Faltan calendario y gráfico |
+| 1 | Registrar y ver: pestaña de registro, historial en lista, PWA, respaldo manual | ✅ Cerrada |
+| 2 | Historial completo: calendario mensual y progreso por ejercicio | ⬜ Pendiente. La edición de días pasados se descartó en la v0.3: el historial es de solo lectura por decisión del usuario |
 | 3 | Google Drive: setup de OAuth y sincronización automática local-primero | ⬜ |
 | 4 | Pulido según lo que moleste al usarla (plantillas, densidad, temporizador, notas) | ⬜ |
 
@@ -109,10 +116,26 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 
 ## Estado actual
 
-**v0.2 lista, sin publicar todavía.** El repositorio en GitHub
+**v0.3 lista, sin publicar todavía.** El repositorio en GitHub
 (`acordovav13/entrenamientos`, público) está creado pero aún vacío: falta el primer push.
 
-### Lo que trae la v0.2
+### Lo que trae la v0.3
+- **Pestaña "Hoy" renombrada a "Entrenar"**, porque ya no solo muestra hoy: desde ahí
+  se registra el día actual y se planifican los siguientes.
+- **Repisa de días** en Entrenar: hoy, mañana, pasado y el día siguiente a un toque,
+  más un calendario para cualquier otra fecha futura. Lo elegido se ilumina, el resto
+  queda apagado, y las opciones se separan con una barrita fina en vez de parecer botones.
+- **El historial vuelve a ser de solo lectura**, como en la v0.1, pero conservando las
+  tarjetas por día de la v0.2. Los días planificados ya no aparecen ahí: lo que no ha
+  pasado no es historial, y se ve desde Entrenar.
+- **Varias rutinas por día sin pelear**: antes, con dos rutinas abiertas, todo caía en
+  la primera y había que cerrar las demás para poder agregar donde uno quería. Ahora
+  hay un botón "Nueva rutina de este día", cada rutina abierta tiene su propio
+  "Agregar a esta rutina", y el botón grande cae en la rutina marcada "En curso",
+  que es la última abierta. Las otras abiertas se marcan solo como "Abierta".
+- Solo se puede planificar de hoy en adelante: el calendario tiene `min` en hoy.
+
+### Lo que trajo la v0.2
 - **Historial mucho más separado**: cada día es una tarjeta con su cabecera, y las
   rutinas dentro quedan en bandas distintas. Antes solo los dividía una línea fina.
 - **Cualquier día es editable**: tocas un día del historial y se abre con la misma

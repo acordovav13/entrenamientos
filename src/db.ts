@@ -30,14 +30,17 @@ export async function rutinasDe(fecha: string): Promise<Rutina[]> {
 }
 
 /**
- * Devuelve la rutina abierta del dia, creandola si no existe.
- * La rutina se abre sola al agregar el primer ejercicio: nunca hay un boton "empezar".
+ * La rutina activa del dia: la ultima abierta, no la primera.
+ * Con dos rutinas abiertas, lo que agregas va a la mas reciente, que es en la que
+ * estas trabajando. Antes iba siempre a la primera y obligaba a cerrar las otras.
  */
-export async function rutinaAbierta(fecha: string): Promise<Rutina> {
+export async function rutinaActiva(fecha: string): Promise<Rutina | undefined> {
   const rs = await rutinasDe(fecha)
-  const abierta = rs.find((r) => !r.cerrada)
-  if (abierta) return abierta
+  return rs.filter((r) => !r.cerrada).at(-1)
+}
 
+export async function crearRutina(fecha: string): Promise<Rutina> {
+  const rs = await rutinasDe(fecha)
   const nueva: Rutina = {
     id: id(),
     fecha,
@@ -94,8 +97,21 @@ export interface NuevoEjercicio {
   distanciaKm?: number
 }
 
-export async function agregarEjercicio(fecha: string, datos: NuevoEjercicio): Promise<Ejercicio> {
-  const rutina = await rutinaAbierta(fecha)
+/**
+ * `destino` decide en que rutina cae el ejercicio:
+ * un id concreto, 'nueva' para abrir otra rutina, o nada para la activa del dia.
+ */
+export async function agregarEjercicio(
+  fecha: string,
+  datos: NuevoEjercicio,
+  destino?: string | 'nueva',
+): Promise<Ejercicio> {
+  let rutina: Rutina | undefined
+  if (destino === 'nueva') rutina = await crearRutina(fecha)
+  else if (destino) rutina = await db.rutinas.get(destino)
+  // La rutina se abre sola al agregar el primer ejercicio: nunca hay boton "empezar".
+  if (!rutina) rutina = (await rutinaActiva(fecha)) ?? (await crearRutina(fecha))
+
   const existentes = await ejerciciosDe(rutina.id)
   const ejercicio: Ejercicio = {
     id: id(),

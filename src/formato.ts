@@ -29,6 +29,20 @@ export function fechaCorta(iso: string): string {
   return mayuscula(corto.format(aFecha(iso)).replace(/\./g, ''))
 }
 
+const diaMesFmt = new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short' })
+const diaSemanaFmt = new Intl.DateTimeFormat('es-CL', { weekday: 'short' })
+
+/** "21 sep", para la segunda linea de la repisa de dias. */
+export function diaMes(iso: string): string {
+  return diaMesFmt.format(aFecha(iso)).replace(/\./g, '')
+}
+
+/** "Jue", para los dias de la repisa que no tienen nombre propio. */
+export function diaSemanaCorto(iso: string): string {
+  const s = diaSemanaFmt.format(aFecha(iso)).replace(/\./g, '')
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 /** Dias de diferencia con hoy: negativo es pasado, positivo es futuro. */
 export function diasDesdeHoy(iso: string): number {
   const hoy = new Date()

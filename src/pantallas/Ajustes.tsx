@@ -3,6 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { borrarTodo, db, exportar, hoyISO, importar } from '../db'
 import { cargarEjemplo } from '../ejemplo'
 
+/** Tiene que coincidir con VERSIONES_ANTERIORES de .github/workflows/deploy.yml. */
+const VERSIONES_ANTERIORES = ['v0.1', 'v0.2']
+
 export default function Ajustes() {
   const archivo = useRef<HTMLInputElement>(null)
   const [aviso, setAviso] = useState<{ texto: string; error?: boolean } | null>(null)
@@ -115,9 +118,16 @@ export default function Ajustes() {
               Estás en la v{__VERSION__}. Las versiones publicadas comparten el mismo historial,
               así que puedes saltar entre ellas y seguir donde ibas.
             </p>
-            <a className="btn secundario" href={`${import.meta.env.BASE_URL}v0.1/`}>
-              Abrir la v0.1
-            </a>
+            {VERSIONES_ANTERIORES.map((v) => (
+              <a
+                key={v}
+                className="btn secundario"
+                style={{ marginBottom: 8 }}
+                href={`${import.meta.env.BASE_URL}${v}/`}
+              >
+                Abrir la {v}
+              </a>
+            ))}
           </div>
         )}
 

@@ -139,6 +139,79 @@ select:focus {
   background: var(--borde);
 }
 
+/* --- Repisa de dias --- */
+
+/* No son botones sueltos: es una repisa continua, separada por barritas finas.
+   Lo elegido se ilumina; lo demas queda un nivel mas apagado. */
+.repisa {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--borde);
+}
+
+.repisa button {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 4px;
+  color: var(--tenue);
+  opacity: 0.45;
+  box-shadow: inset 0 -2px 0 transparent;
+  transition:
+    opacity 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.repisa button + button::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 24%;
+  bottom: 24%;
+  width: 1px;
+  background: var(--borde);
+}
+
+.repisa button[aria-selected='true'] {
+  opacity: 1;
+  color: var(--texto);
+  box-shadow: inset 0 -2px 0 var(--acento);
+}
+
+.repisa button:active {
+  opacity: 0.85;
+}
+
+.repisa .nombre {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.repisa .fecha {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.repisa .calendario {
+  flex: 0 0 auto;
+  min-width: 48px;
+  padding: 10px 9px;
+}
+
 .contenido {
   flex: 1;
   overflow-y: auto;
@@ -270,6 +343,45 @@ select:focus {
 .etiqueta.viva {
   color: var(--acento);
   border-color: var(--acento-oscuro);
+}
+
+/* Cada rutina abierta recibe lo suyo: sin esto habia que cerrar las demas rutinas
+   para poder agregar un ejercicio a la que uno queria. */
+.pie-rutina {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: var(--toque);
+  border-top: 1px solid var(--borde);
+  color: var(--tenue);
+  font-size: 13px;
+}
+
+.pie-rutina:active {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+
+.nueva-rutina {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: var(--toque);
+  margin-bottom: 12px;
+  border: 1px dashed var(--borde);
+  border-radius: var(--radio);
+  color: var(--tenue);
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.nueva-rutina:active {
+  border-color: var(--acento-oscuro);
+  color: var(--acento);
 }
 
 .cerrojo {
@@ -667,10 +779,6 @@ a.btn {
   background: var(--superficie-2);
   border-bottom: 1px solid var(--borde);
   color: var(--tenue);
-}
-
-.dia-cab:active {
-  background: var(--borde);
 }
 
 .dia-cab .fecha {
