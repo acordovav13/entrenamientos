@@ -122,8 +122,13 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 
 ## Estado actual
 
-**v0.5 lista, sin publicar todavía.** El repositorio en GitHub
-(`acordovav13/entrenamientos`, público) está creado pero aún vacío: falta el primer push.
+**v0.5 publicada y funcionando** en https://acordovav13.github.io/entrenamientos/,
+con las cinco versiones accesibles y compartiendo historial. Repositorio:
+`acordovav13/entrenamientos` (público), desplegado por GitHub Actions en cada push a `main`.
+
+Verificado en producción: cada `/vX.Y/` sirve su propio bundle (o sea que la exclusión
+del service worker funciona), el manifest queda en `standalone` con scope
+`/entrenamientos/`, y el service worker se registra. La app es instalable.
 
 ### Lo que trae la v0.5
 - **Paleta con tono.** La v0.4 arregló lo "informático" pero se fue a grises neutros y
