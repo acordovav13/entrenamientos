@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from './db'
+import { pedirPersistencia, respaldoAtrasado } from './almacenamiento'
 import Entrenar from './pantallas/Entrenar'
 import Historial from './pantallas/Historial'
 import Ajustes from './pantallas/Ajustes'
@@ -17,6 +20,15 @@ export default function App() {
   // costar ninguna navegacion.
   const [pestana, setPestana] = useState<Pestana>('entrenar')
 
+  // El historial es la unica copia que existe: hay que pedirle al navegador que no
+  // lo descarte cuando al telefono le falte espacio.
+  useEffect(() => {
+    pedirPersistencia()
+  }, [])
+
+  const hayDatos = useLiveQuery(async () => (await db.rutinas.count()) > 0, [], false)
+  const avisarRespaldo = respaldoAtrasado(hayDatos)
+
   return (
     <div className="app">
       {pestana === 'entrenar' && <Entrenar />}
@@ -30,7 +42,11 @@ export default function App() {
             onClick={() => setPestana(id)}
             aria-current={pestana === id ? 'page' : undefined}
           >
-            <Icono />
+            <span className="icono-nav">
+              <Icono />
+              {/* Punto discreto: recuerda el respaldo sin interrumpir el entrenamiento. */}
+              {id === 'ajustes' && avisarRespaldo && <span className="punto" aria-hidden="true" />}
+            </span>
             {texto}
           </button>
         ))}

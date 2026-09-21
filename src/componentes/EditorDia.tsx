@@ -19,7 +19,7 @@ import FormularioEjercicio from './FormularioEjercicio'
 import Hoja from './Hoja'
 import HojaAgregar from './HojaAgregar'
 import TarjetaEjercicio from './TarjetaEjercicio'
-import { IconoCandado, IconoMas } from './Iconos'
+import { IconoCandado, IconoMas, IconoPapelera } from './Iconos'
 
 interface Props {
   /** YYYY-MM-DD. Sirve para hoy o para cualquier dia futuro. */
@@ -108,9 +108,28 @@ export default function EditorDia({ fecha }: Props) {
 
                 {/* Cada rutina abierta recibe lo suyo sin que haya que cerrar las demas. */}
                 {!rutina.cerrada && ejercicios.length > 0 && (
-                  <button className="pie-rutina" onClick={() => setAgregandoEn(rutina.id)}>
-                    <IconoMas size={15} /> {verbo} en esta rutina
-                  </button>
+                  <div className="pie-fila">
+                    <button className="pie-rutina" onClick={() => setAgregandoEn(rutina.id)}>
+                      <IconoMas size={15} /> {verbo} en esta rutina
+                    </button>
+                    <button
+                      className="pie-borrar"
+                      aria-label="Borrar esta rutina"
+                      onClick={() => {
+                        const cuantos = ejercicios.length
+                        const nombre = rutina.nombre ? `"${rutina.nombre}"` : 'esta rutina'
+                        if (
+                          confirm(
+                            `Se borra ${nombre} con sus ${cuantos} ejercicios. No se puede deshacer.`,
+                          )
+                        ) {
+                          borrarRutina(rutina.id)
+                        }
+                      }}
+                    >
+                      <IconoPapelera />
+                    </button>
+                  </div>
                 )}
               </section>
             ))}
@@ -154,6 +173,8 @@ export default function EditorDia({ fecha }: Props) {
               setEditando(null)
             }}
             onBorrar={async () => {
+              // Un toque mal dado borraba el ejercicio sin aviso y sin deshacer.
+              if (!confirm(`Se borra "${editando.nombre}". No se puede deshacer.`)) return
               await borrarEjercicio(editando.id)
               setEditando(null)
             }}

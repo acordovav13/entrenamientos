@@ -389,6 +389,32 @@ select:focus {
   color: var(--texto);
 }
 
+.pie-fila {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--borde);
+}
+
+.pie-fila .pie-rutina {
+  border-top: none;
+}
+
+/* Borrar la rutina entera: discreto y a un lado, para no confundirlo con agregar. */
+.pie-borrar {
+  flex: 0 0 auto;
+  width: var(--toque);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid var(--borde);
+  color: var(--tenue);
+}
+
+.pie-borrar:active {
+  background: color-mix(in srgb, var(--peligro) 18%, transparent);
+  color: var(--peligro);
+}
+
 .nueva-rutina {
   display: flex;
   align-items: center;
@@ -927,6 +953,56 @@ a.btn {
   margin: 0 0 12px;
   font-size: 13px;
   color: var(--tenue);
+}
+
+.dato {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--borde) 45%, transparent);
+  font-size: 13px;
+}
+
+.dato:last-of-type {
+  border-bottom: none;
+  margin-bottom: 8px;
+}
+
+.dato span {
+  flex: 1;
+  min-width: 0;
+  color: var(--tenue);
+}
+
+.dato strong {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dato strong.si {
+  color: var(--hecho);
+}
+
+.dato strong.no {
+  color: var(--acento);
+}
+
+/* Punto de aviso sobre el icono de Ajustes cuando falta respaldo. */
+.icono-nav {
+  position: relative;
+  display: flex;
+}
+
+.punto {
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--acento);
+  border: 1.5px solid var(--superficie);
 }
 
 .aviso {

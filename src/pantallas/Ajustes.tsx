@@ -1,10 +1,17 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { borrarTodo, db, exportar, hoyISO, importar } from '../db'
+import {
+  DIAS_PARA_RECORDAR,
+  diasSinRespaldo,
+  estadoAlmacenamiento,
+  marcarRespaldo,
+  type EstadoAlmacenamiento,
+} from '../almacenamiento'
 import { cargarEjemplo } from '../ejemplo'
 
 /** Tiene que coincidir con VERSIONES_ANTERIORES de .github/workflows/deploy.yml. */
-const VERSIONES_ANTERIORES = ['v0.1', 'v0.2', 'v0.3', 'v0.4']
+const VERSIONES_ANTERIORES = ['v0.1', 'v0.2', 'v0.3', 'v0.4', 'v0.5']
 
 export default function Ajustes() {
   const archivo = useRef<HTMLInputElement>(null)
@@ -18,6 +25,13 @@ export default function Ajustes() {
     [],
   )
 
+  const [almacen, setAlmacen] = useState<EstadoAlmacenamiento | null>(null)
+  const [dias, setDias] = useState<number | null>(diasSinRespaldo)
+
+  useEffect(() => {
+    estadoAlmacenamiento().then(setAlmacen)
+  }, [])
+
   const alExportar = async () => {
     const datos = await exportar()
     const url = URL.createObjectURL(
@@ -28,6 +42,8 @@ export default function Ajustes() {
     a.download = `entrenamientos-${hoyISO()}.json`
     a.click()
     URL.revokeObjectURL(url)
+    marcarRespaldo()
+    setDias(0)
     setAviso({ texto: 'Respaldo descargado.' })
   }
 
@@ -70,10 +86,42 @@ export default function Ajustes() {
         {aviso && <div className={`aviso${aviso.error ? ' error' : ''}`}>{aviso.texto}</div>}
 
         <div className="grupo">
+          <h2>Dónde viven tus datos</h2>
+          <p style={{ margin: 0 }}>
+            Tu historial se guarda dentro de este navegador, en este dispositivo. No está en
+            internet y nadie más lo ve.
+          </p>
+          <div className="dato">
+            <span>Protegido contra borrado automático</span>
+            <strong className={almacen?.protegido ? 'si' : 'no'}>
+              {almacen === null ? '…' : almacen.protegido ? 'Sí' : 'Todavía no'}
+            </strong>
+          </div>
+          {almacen?.usadoMB != null && (
+            <div className="dato">
+              <span>Espacio ocupado</span>
+              <strong>{almacen.usadoMB < 1 ? 'menos de 1 MB' : `${almacen.usadoMB.toFixed(1)} MB`}</strong>
+            </div>
+          )}
+          {almacen && !almacen.protegido && (
+            <p className="nota" style={{ marginTop: 10 }}>
+              El navegador aún no garantiza tus datos. Se concede solo al instalar la app en
+              la pantalla de inicio y usarla unos días. Mientras tanto, exporta un respaldo.
+            </p>
+          )}
+        </div>
+
+        <div className="grupo">
           <h2>Respaldo</h2>
+          <div className="dato">
+            <span>Último respaldo</span>
+            <strong className={dias === null || dias >= DIAS_PARA_RECORDAR ? 'no' : 'si'}>
+              {dias === null ? 'Nunca' : dias === 0 ? 'Hoy' : `Hace ${dias} días`}
+            </strong>
+          </div>
           <p>
-            Los datos viven solo en este dispositivo. Exporta un archivo de vez en cuando y
-            guárdalo donde quieras; con importar lo recuperas en otro navegador o teléfono.
+            Exporta un archivo de vez en cuando y guárdalo donde quieras; con importar lo
+            recuperas en otro navegador o teléfono.
           </p>
           <button className="btn" onClick={alExportar}>
             Exportar respaldo

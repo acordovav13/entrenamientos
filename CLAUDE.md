@@ -103,8 +103,12 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 | v0.2 | Días en tarjetas, historial editable, planificación desde Historial | Etiquetada |
 | v0.3 | Historial de solo lectura otra vez, repisa de días en Entrenar, varias rutinas por día sin cerrar ninguna | Etiquetada |
 | v0.4 | Paleta cálida gris, sin botón fijo ni etiqueta "En curso", rutinas cerradas compactas | Etiquetada |
-| v0.5 | Paleta berenjena con ámbar y verde: la v0.4 quedó demasiado gris | Actual |
-| v1.0 | La `0.x` elegida, tras dos semanas de uso real y sus correcciones | Pendiente |
+| v0.5 | Paleta berenjena con ámbar y verde: la v0.4 quedó demasiado gris | Etiquetada |
+| v0.6 | Protección de datos: almacenamiento persistente, confirmaciones, aviso de respaldo, medianoche | Actual |
+| v1.0 | La v0.6 tras dos semanas de uso real, más lo que salga de ese uso | Pendiente |
+
+**Decisión tomada:** la **v0.5 es la base de la 1.0**. Las versiones anteriores quedan
+publicadas solo como referencia; no se sigue desarrollando sobre ellas.
 
 ---
 
@@ -114,15 +118,28 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 | --- | --- | --- |
 | 0 | Diseño y decisiones | ✅ Cerrada |
 | 1 | Registrar y ver: pestaña de registro, historial en lista, PWA, respaldo manual | ✅ Cerrada |
+| 1.5 | Protección de datos (v0.6): antes de acumular entrenamientos de verdad | ✅ Cerrada |
 | 2 | Historial completo: calendario mensual y progreso por ejercicio | ⬜ Pendiente. La edición de días pasados se descartó en la v0.3: el historial es de solo lectura por decisión del usuario |
-| 3 | Google Drive: setup de OAuth y sincronización automática local-primero | ⬜ |
+| 3 | Google Drive: setup de OAuth y sincronización automática local-primero | ⬜ Fuera de la 1.0, por decisión del usuario |
 | 4 | Pulido según lo que moleste al usarla (plantillas, densidad, temporizador, notas) | ⬜ |
+
+## Camino a la 1.0
+
+1. **Ahora:** dos semanas usando la v0.6 en el gimnasio, desde el teléfono. Solo teléfono;
+   el PC no entra en la evaluación.
+2. **Después:** corregir lo que moleste del uso real. Eso manda por sobre cualquier
+   función nueva.
+3. **Luego:** decidir si la fase 2 (calendario y gráfico de progreso) entra en la 1.0 o
+   queda para después. Se decide con dos semanas de datos propios encima, no antes.
+4. **Se declara 1.0** cuando la app aguante un mes sin sorpresas y sin pérdidas de datos.
+
+Fuera de la 1.0 por decisión explícita: Google Drive (fase 3) y todo lo de la fase 4.
 
 ---
 
 ## Estado actual
 
-**v0.5 publicada y funcionando** en https://acordovav13.github.io/entrenamientos/,
+**v0.6 lista, sin publicar.** La v0.5 quedo publicada y funcionando en https://acordovav13.github.io/entrenamientos/,
 con las cinco versiones accesibles y compartiendo historial. Repositorio:
 `acordovav13/entrenamientos` (público), desplegado por GitHub Actions en cada push a `main`.
 
@@ -130,7 +147,23 @@ Verificado en producción: cada `/vX.Y/` sirve su propio bundle (o sea que la ex
 del service worker funciona), el manifest queda en `standalone` con scope
 `/entrenamientos/`, y el service worker se registra. La app es instalable.
 
-### Lo que trae la v0.5
+### Lo que trae la v0.6
+Todo apunta a un solo riesgo: el historial es la única copia que existe.
+- **Almacenamiento persistente.** La app pide `navigator.storage.persist()` al arrancar,
+  para que el sistema no descarte el IndexedDB cuando falte espacio. El navegador decide:
+  en Android se concede al instalar la app en la pantalla de inicio. Ajustes muestra el
+  estado real, no una promesa.
+- **Confirmación antes de borrar** un ejercicio. Antes un toque mal dado lo perdía sin aviso.
+- **Se puede borrar una rutina completa**, con sus ejercicios, desde el icono de papelera
+  del pie. Antes había que vaciarla ejercicio por ejercicio para que apareciera "Descartar".
+- **Aviso de respaldo.** Ajustes muestra cuándo fue el último, y a los 14 días aparece un
+  punto ámbar en la pestaña de Ajustes. Discreto: no interrumpe el entrenamiento.
+- **Medianoche.** La fecha se calculaba una sola vez al abrir, así que una app instalada
+  (que nunca se cierra del todo) se quedaba mostrando el día anterior. Ahora se revisa al
+  volver del segundo plano y cada minuto.
+- Ajustes explica en una frase dónde viven los datos y cuánto espacio ocupan.
+
+### Lo que trajo la v0.5
 - **Paleta con tono.** La v0.4 arregló lo "informático" pero se fue a grises neutros y
   quedó apagada. Ahora la base es berenjena oscuro (`#191426`), con tono propio, y hay
   **dos acentos con significado**: ámbar (`#f7a55c`) para lo que se toca y verde

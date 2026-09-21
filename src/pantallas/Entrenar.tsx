@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { hoyISO } from '../db'
 import { diaMes, diaSemanaCorto, diasDesdeHoy, fechaLarga } from '../formato'
+import { useHoy } from '../useHoy'
 import EditorDia from '../componentes/EditorDia'
 import Hoja from '../componentes/Hoja'
 import { IconoCalendario } from '../componentes/Iconos'
@@ -69,8 +70,21 @@ function HojaCalendario({
 }
 
 export default function Entrenar() {
-  const [fecha, setFecha] = useState(hoyISO())
+  const hoy = useHoy()
+  const [fecha, setFecha] = useState(hoy)
   const [abriendoCalendario, setAbriendoCalendario] = useState(false)
+
+  // Al cruzar la medianoche, quien estaba mirando "Hoy" pasa al dia nuevo.
+  // A quien esta mirando otro dia no se le mueve la pantalla debajo.
+  const hoyAnterior = useRef(hoy)
+  useEffect(() => {
+    // El dia anterior se guarda en una constante antes de pisar el ref: React ejecuta
+    // el actualizador despues, y para entonces el ref ya valdria el dia nuevo.
+    const anterior = hoyAnterior.current
+    if (anterior === hoy) return
+    hoyAnterior.current = hoy
+    setFecha((f) => (f === anterior ? hoy : f))
+  }, [hoy])
 
   const desplazamiento = diasDesdeHoy(fecha)
   const esOtroDia = !FIJOS.includes(desplazamiento)

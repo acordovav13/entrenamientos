@@ -63,6 +63,12 @@ export const IconoCheck = ({ size = 18 }: Props) => (
   </svg>
 )
 
+export const IconoPapelera = ({ size = 16 }: Props) => (
+  <svg {...base(size)} aria-hidden="true">
+    <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+  </svg>
+)
+
 export const IconoDerecha = ({ size = 18 }: Props) => (
   <svg {...base(size)} aria-hidden="true">
     <path d="m9 18 6-6-6-6" />
