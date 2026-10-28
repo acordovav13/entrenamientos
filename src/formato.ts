@@ -69,6 +69,11 @@ export function numero(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ',')
 }
 
+/** "1 rutina", "3 rutinas". Sin esto la app decía "1 rutinas". */
+export function contar(n: number, singular: string, plural = `${singular}s`): string {
+  return `${n} ${n === 1 ? singular : plural}`
+}
+
 /** "3 x 10 · 40 kg" cuando las series son iguales, o "10/10/8 · 40 kg" cuando no. */
 export function resumenSeries(series: Serie[]): string {
   if (series.length === 0) return 'sin series'

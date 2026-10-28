@@ -92,11 +92,10 @@ real se corrige en versiones `1.x`.
 - Cada versión se marca con un tag de git (`v0.1`, `v0.2`, ...).
 - `package.json` lleva el número y Vite lo inyecta como `__VERSION__`.
 - La versión se muestra en la cabecera de **Ajustes**, para saber cuál estás usando.
-- Las versiones anteriores se publican en subcarpetas (`/v0.1/`, `/v0.2/`, ...). Se listan
-  en `VERSIONES_ANTERIORES` del workflow y en `VERSIONES_ANTERIORES` de `Ajustes.tsx`:
-  las dos listas tienen que coincidir.
-- Como IndexedDB se guarda por origen y no por ruta, **todas las versiones publicadas
-  comparten el mismo historial**. La comparación es con los mismos datos.
+- Hasta la 1.0, las betas se publicaban en subcarpetas (`/v0.1/` a `/v0.8/`) para
+  compararlas, y como IndexedDB va por origen y no por ruta, todas compartían el mismo
+  historial. **Desde la 1.0.1 ya no se publican**: la comparación terminó y compilarlas
+  alargaba cada despliegue unos 3 minutos. Siguen como etiquetas de git.
 - **Publicar es `git push` a secas**, no `git push --tags`: con `--tags` solo suben las
   etiquetas y la rama se queda atrás, asi que el despliegue (que se dispara al
   empujar `main`) nunca corre. Para subir rama y etiquetas de una: `git push --follow-tags`.
@@ -111,10 +110,11 @@ real se corrige en versiones `1.x`.
 | v0.6 | Protección de datos: almacenamiento persistente, confirmaciones, aviso de respaldo, medianoche | Etiquetada |
 | v0.7 | Fase 2: calendario mensual y progreso por ejercicio con gráfico | Etiquetada |
 | v0.8 | Respaldo automático en Google Drive (fase 3, adelantada a petición del usuario) | Etiquetada |
-| **v1.0** | **La v0.8 declarada estable. Sale el 2026-10-28 por decisión del usuario** | **Publicada, en uso** |
+| v1.0 | La v0.8 declarada estable. Sale el 2026-10-28 por decisión del usuario | Etiquetada |
+| **v1.0.1** | **Arreglos del respaldo en Drive: un archivo por dispositivo, aviso de cambios sin respaldar. Fuera las betas publicadas** | **Publicada, en uso** |
 
 **Decisión tomada:** la **v0.5 es la base de la 1.0**. Las versiones anteriores quedan
-publicadas solo como referencia; no se sigue desarrollando sobre ellas.
+como referencia en git; no se sigue desarrollando sobre ellas.
 
 ---
 
@@ -135,14 +135,39 @@ publicadas solo como referencia; no se sigue desarrollando sobre ellas.
 preveía el plan original. Contiene todo lo diseñado en la fase 0 más el respaldo en
 Drive, que estaba previsto para después de la 1.0 y se adelantó a pedido del usuario.
 
-Lo que la 1.0 lleva **sin verificar con uso real**, y conviene vigilar:
-- **El respaldo en Drive no se ha probado de punta a punta.** El código falla de forma
-  limpia y está probado sin conexión con Google, pero nunca corrió con un ID de cliente
-  real: depende de que el usuario cree uno en Google Cloud (ver la v0.8 más abajo).
-  Mientras eso no pase, el respaldo que existe de verdad es el manual de Ajustes.
+Lo que sigue **sin verificar con uso real**, y conviene vigilar:
+- **Drive con la cuenta real:** la subida manual de la 1.0 funcionó el 2026-10-28 con el
+  ID de cliente del usuario. Lo nuevo de la 1.0.1 (archivo por dispositivo, adopción del
+  archivo de la 1.0, recuperar eligiendo copia) está probado contra un Drive simulado,
+  no contra Google.
 - El calendario y el gráfico de progreso solo se han visto con datos de ejemplo, no con
   el historial real.
 - La densidad compacta nunca se probó en el gimnasio.
+
+### Lo que trae la 1.0.1
+Arregla los bugs que dejó la 1.0, encontrados revisando el código después de publicar.
+- **Un archivo por dispositivo.** En la 1.0 había uno solo, `entrenamientos-respaldo.json`,
+  y el último dispositivo que respaldaba borraba lo que había subido el otro. Ahora cada
+  uno escribe en `entrenamientos-respaldo (<dispositivo>).json`. El dueño se reconoce por
+  `appProperties.dispositivo` (un id al azar guardado en localStorage), no por el nombre,
+  así que moverlo de carpeta no rompe nada. El nombre del dispositivo sale del navegador.
+- **Adopción del archivo de la 1.0:** el dispositivo que ya lo usaba (lo tiene en
+  `drive-archivo-id`) lo marca como suyo y le pone su nombre. Un archivo con otro dueño
+  nunca se toca, y uno en la papelera se descarta: antes se seguía escribiendo ahí.
+- **El automático ya no abre la ventana de Google.** En la 1.0 lo intentaba sin un clic,
+  el navegador la bloqueaba y fallaba en silencio. Ahora solo sube con el permiso de un
+  toque reciente (dura una hora): 20 s después del último cambio, al salir o volver a la
+  app, y al recuperar la señal.
+- **Banda "Hay cambios sin respaldar en Drive"** sobre las pestañas, con el botón
+  Respaldar, cuando hay datos sin subir y no queda permiso, o cuando un intento falló
+  (dice por qué: sin conexión, permiso vencido, ventana cerrada). No sale en Ajustes.
+- **Recuperar deja elegir la copia**: lista las de Drive con dispositivo, fecha y número
+  de rutinas, la más reciente primero.
+- En Ajustes, "Por subir" pasó a ser "Estado: Al día / Cambios sin respaldar".
+- **El punto ámbar cuenta Drive:** cada subida llama a `marcarRespaldo`.
+- Plurales: `contar()` en `formato.ts` ("1 rutina", no "1 rutinas").
+- Limpieza: fuera los botones de betas de Ajustes y sus compilaciones del workflow, README
+  al día, y `ejemplo.ts` fuera del paquete publicado (import dinámico tras `import.meta.env.DEV`).
 
 **Qué viene después:** lo que moleste del uso real, en versiones `1.1`, `1.2`... Eso manda
 por sobre cualquier función nueva. Siguen fuera: la sincronización en dos vías entre
@@ -152,16 +177,15 @@ dispositivos (la 1.0 solo respalda) y el pulido de la fase 4.
 
 ## Estado actual
 
-**v1.0 publicada** en https://acordovav13.github.io/entrenamientos/, con las ocho
-versiones beta (`v0.1` a `v0.8`) accesibles en subcarpetas y compartiendo historial.
-Repositorio: `acordovav13/entrenamientos` (público), desplegado por GitHub Actions en
-cada push a `main`.
+**v1.0.1 publicada** en https://acordovav13.github.io/entrenamientos/. Repositorio:
+`acordovav13/entrenamientos` (público), desplegado por GitHub Actions en cada push a `main`.
 
-**Pendiente del usuario:** crear el ID de cliente de OAuth en Google Cloud y pegarlo en
-Ajustes, en el PC y en el teléfono. Sin eso, el respaldo en Drive no funciona.
+**Drive funcionando desde el 2026-10-28**: el usuario creó el ID de cliente y lo tiene
+conectado solo en el teléfono (el PC se desconectó por el bug del archivo único de la
+1.0). Con la 1.0.1 ya puede conectar también el PC. Cada archivo queda suelto en la raíz
+de Mi unidad (se crea sin `parents`), y Drive guarda 30 días de versiones anteriores.
 
-Verificado en producción: cada `/vX.Y/` sirve su propio bundle (o sea que la exclusión
-del service worker funciona), el manifest queda en `standalone` con scope
+Verificado en producción (v1.0): el manifest queda en `standalone` con scope
 `/entrenamientos/`, y el service worker se registra. La app es instalable.
 
 ### Lo que trae la v0.8 (respaldo en Drive)
@@ -175,8 +199,8 @@ dispositivos. La sincronización en dos vías sigue pendiente y fuera de la 1.0.
   Claude no puede hacer: es la cuenta de Google del usuario.
 - **Respaldo automático** al abrir la app y al volver del segundo plano, solo si los
   datos cambiaron (se compara una huella: nº de rutinas, nº de ejercicios y el
-  `actualizado` más reciente). Nunca abre ventanas: si Google necesita autorización de
-  nuevo, se salta el intento en silencio y espera a que el usuario entre a Ajustes.
+  `actualizado` más reciente). En la práctica casi nunca corría: renovar el permiso abre
+  la ventana de Google y sin un clic el navegador la bloquea. La 1.0.1 lo rehízo (arriba).
 - **La ventana de Google se abre de forma síncrona dentro del clic.** Si se abriera
   después de un `await` (por ejemplo tras leer la base), el navegador la bloquea por
   emergente. Por eso `pedirToken` tiene un camino síncrono cuando el guion ya está

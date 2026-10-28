@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { hoyISO } from '../db'
+import { contar } from '../formato'
 import { diasDelMes } from '../progreso'
 import { IconoAtras, IconoDerecha } from './Iconos'
 
@@ -95,7 +96,7 @@ export default function Calendario({ onElegirDia, fechaElegida }: Props) {
                 fechaElegida === fecha ? ' elegida' : ''
               }${todoHecho ? '' : ' parcial'}`}
               onClick={() => onElegirDia(fecha)}
-              aria-label={`${dia}: ${marca.completos} de ${marca.total} ejercicios completados`}
+              aria-label={`${dia}: ${marca.completos} de ${contar(marca.total, 'ejercicio')} completados`}
             >
               {dia}
             </button>

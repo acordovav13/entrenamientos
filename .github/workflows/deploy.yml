@@ -15,20 +15,15 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
-env:
-  # Versiones antiguas que se publican en subcarpetas, para poder compararlas con
-  # la actual usando el mismo historial. Separadas por espacios. Para dejar de
-  # publicar una, se quita de aqui; para sumar otra, se agrega su tag.
-  VERSIONES_ANTERIORES: v0.1 v0.2 v0.3 v0.4 v0.5 v0.6 v0.7 v0.8
+# Hasta la 1.0 tambien se compilaban las versiones beta en subcarpetas (/v0.1/...),
+# para compararlas con el mismo historial. Desde la 1.0.1 ya no: la comparacion
+# termino y alargaba cada despliegue. Siguen como tags de git.
 
 jobs:
   construir:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Hacen falta los tags para poder compilar las versiones anteriores.
-          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -43,21 +38,6 @@ jobs:
           # GitHub Pages sirve los proyectos desde /<nombre-repo>/, asi que la base
           # se toma del nombre del repositorio y no hay nada que ajustar a mano.
           VITE_BASE: /${{ github.event.repository.name }}/
-
-      - name: Compilar las versiones anteriores
-        run: |
-          set -euo pipefail
-          for tag in $VERSIONES_ANTERIORES; do
-            echo "::group::Compilando $tag"
-            git worktree add "../$tag" "$tag"
-            (
-              cd "../$tag"
-              npm ci
-              VITE_BASE="/${{ github.event.repository.name }}/$tag/" npm run build
-            )
-            cp -r "../$tag/dist" "dist/$tag"
-            echo "::endgroup::"
-          done
 
       # enablement activa Pages desde el propio workflow. Sin esto, el primer push a
       # un repositorio nuevo falla porque Pages todavia no esta configurado a mano.

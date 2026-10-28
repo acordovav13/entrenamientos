@@ -1,5 +1,5 @@
 import { db } from './db'
-import { diasDesdeHoy, estaCompleto } from './formato'
+import { contar, diasDesdeHoy, estaCompleto } from './formato'
 import type { Ejercicio } from './tipos'
 
 /**
@@ -141,13 +141,13 @@ export async function progresoDe(nombre: string): Promise<SerieProgreso> {
       puntos.push({
         fecha,
         valor: mejor.peso,
-        detalle: `${hechas.length} series · ${mejor.reps} reps @ ${numero(mejor.peso)} kg`,
+        detalle: `${contar(hechas.length, 'serie')} · ${mejor.reps} reps @ ${numero(mejor.peso)} kg`,
       })
     } else {
       unidad = 'reps'
       explicacion = 'Repeticiones totales que marcaste hechas (es peso corporal)'
       const total = hechas.reduce((t, s) => t + s.reps, 0)
-      puntos.push({ fecha, valor: total, detalle: `${hechas.length} series · ${total} reps` })
+      puntos.push({ fecha, valor: total, detalle: `${contar(hechas.length, 'serie')} · ${total} reps` })
     }
   }
 

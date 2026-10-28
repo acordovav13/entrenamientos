@@ -402,7 +402,53 @@ select:focus {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 12px 16px calc(var(--nav) + 24px);
+  padding: 12px 16px calc(var(--nav) + var(--aviso, 0px) + 24px);
+}
+
+/* Banda de respaldo pendiente: pegada sobre las pestañas, a mano del pulgar.
+   Mientras se ve, el contenido gana espacio abajo para que no tape nada. */
+.app.con-aviso {
+  --aviso: 57px;
+}
+
+.aviso-respaldo {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav) + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 6px 8px 6px 16px;
+  background: var(--superficie-2);
+  border-top: 1px solid var(--borde);
+  font-size: 13px;
+}
+
+.aviso-respaldo span {
+  flex: 1;
+  min-width: 0;
+}
+
+.aviso-respaldo.con-fallo span {
+  color: var(--peligro);
+}
+
+.aviso-respaldo button {
+  flex-shrink: 0;
+  min-height: var(--toque);
+  padding: 0 16px;
+  border-radius: 8px;
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-weight: 650;
+}
+
+.aviso-respaldo button:disabled {
+  opacity: 0.6;
 }
 
 .nota {
@@ -1163,6 +1209,43 @@ a.btn {
   color: var(--acento);
 }
 
+/* Copias en Drive para elegir cuál recuperar: una por dispositivo. */
+.copias {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grupo .copias p {
+  margin: 0 0 2px;
+}
+
+.copia {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: var(--toque);
+  padding: 10px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--superficie-2);
+  text-align: left;
+}
+
+.copia:active {
+  background: var(--borde);
+}
+
+.copia strong {
+  font-weight: 600;
+}
+
+.copia span {
+  font-size: 12px;
+  color: var(--tenue);
+}
+
 /* Punto de aviso sobre el icono de Ajustes cuando falta respaldo. */
 .icono-nav {
   position: relative;
@@ -1198,7 +1281,7 @@ a.btn {
 
 @media (min-width: 640px) {
   .contenido {
-    padding-bottom: calc(var(--nav) + 100px);
+    padding-bottom: calc(var(--nav) + var(--aviso, 0px) + 100px);
   }
 }
 

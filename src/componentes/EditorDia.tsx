@@ -118,11 +118,13 @@ export default function EditorDia({ fecha }: Props) {
                       onClick={() => {
                         const cuantos = ejercicios.length
                         const nombre = rutina.nombre ? `"${rutina.nombre}"` : 'esta rutina'
-                        if (
-                          confirm(
-                            `Se borra ${nombre} con sus ${cuantos} ejercicios. No se puede deshacer.`,
-                          )
-                        ) {
+                        const con =
+                          cuantos === 0
+                            ? ''
+                            : cuantos === 1
+                              ? ' con su ejercicio'
+                              : ` con sus ${cuantos} ejercicios`
+                        if (confirm(`Se borra ${nombre}${con}. No se puede deshacer.`)) {
                           borrarRutina(rutina.id)
                         }
                       }}

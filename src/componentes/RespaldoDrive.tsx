@@ -1,19 +1,18 @@
-import { useEffect, useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db, exportar, importar } from '../db'
+import { useState } from 'react'
+import { importar } from '../db'
 import {
-  bajarRespaldo,
+  bajarCopia,
   clientId,
   desconectar,
   estaConfigurado,
   guardarClientId,
-  pedirToken,
-  marcarDatosRespaldados,
-  precargarGis,
-  subirRespaldo,
-  ultimoRespaldoDrive,
+  listarCopias,
+  nombreArchivo,
+  respaldarAhora,
+  type CopiaEnDrive,
 } from '../drive'
-import { marcarRespaldo } from '../almacenamiento'
+import { contar } from '../formato'
+import { useRespaldo } from '../useRespaldo'
 
 const cuandoTexto = (d: Date | null) => {
   if (!d) return 'Nunca'
@@ -24,25 +23,17 @@ const cuandoTexto = (d: Date | null) => {
 }
 
 export default function RespaldoDrive() {
-  const [configurado, setConfigurado] = useState(estaConfigurado)
+  const respaldo = useRespaldo()
   const [campo, setCampo] = useState(clientId() ?? '')
-  const [ultimo, setUltimo] = useState<Date | null>(ultimoRespaldoDrive)
-  const [ocupado, setOcupado] = useState<'subir' | 'bajar' | null>(null)
+  const [bajando, setBajando] = useState(false)
+  const [copias, setCopias] = useState<CopiaEnDrive[] | null>(null)
   const [aviso, setAviso] = useState<{ texto: string; error?: boolean } | null>(null)
 
-  const cuentas = useLiveQuery(
-    async () => ({ rutinas: await db.rutinas.count(), ejercicios: await db.ejercicios.count() }),
-    [],
-  )
-
-  // Con el guion ya cargado, la ventana de Google se abre dentro del clic.
-  useEffect(() => {
-    if (configurado) precargarGis()
-  }, [configurado])
+  const error = (e: unknown, otro: string) =>
+    setAviso({ texto: e instanceof Error ? e.message : otro, error: true })
 
   const alGuardarId = () => {
     guardarClientId(campo)
-    setConfigurado(estaConfigurado())
     setAviso(
       estaConfigurado()
         ? { texto: 'ID guardado. Ya puedes respaldar.' }
@@ -50,51 +41,48 @@ export default function RespaldoDrive() {
     )
   }
 
+  // Los dos botones llaman a Drive sin un await antes: la ventana de Google tiene
+  // que abrirse dentro del clic, o el navegador la bloquea por emergente.
   const alSubir = async () => {
-    setOcupado('subir')
     setAviso(null)
     try {
-      // El permiso se pide primero, pegado al clic: si se pidiera despues de leer
-      // la base, el navegador bloquearia la ventana de Google por emergente.
-      await pedirToken(true)
-      const datos = await exportar()
-      const { fecha, rutinas } = await subirRespaldo(datos, datos.rutinas.length, false)
-      setUltimo(fecha)
-      marcarRespaldo()
-      await marcarDatosRespaldados()
-      setAviso({ texto: `Subidas ${rutinas} rutinas a tu Drive.` })
+      const { rutinas } = await respaldarAhora()
+      setAviso({ texto: `Listo: ${contar(rutinas, 'rutina')} en tu Drive.` })
     } catch (e) {
-      setAviso({ texto: e instanceof Error ? e.message : 'No se pudo subir.', error: true })
-    } finally {
-      setOcupado(null)
+      error(e, 'No se pudo subir.')
     }
   }
 
-  const alBajar = async () => {
-    if (
-      !confirm(
-        'Reemplaza TODO lo que tengas en este dispositivo por la copia de Drive. No se puede deshacer.',
-      )
-    )
-      return
-    setOcupado('bajar')
+  const alRecuperar = async () => {
     setAviso(null)
+    setBajando(true)
     try {
-      const datos = await bajarRespaldo()
-      if (!datos) {
-        setAviso({ texto: 'En tu Drive todavía no hay ningún respaldo.', error: true })
-        return
-      }
-      const n = await importar(datos)
-      setAviso({ texto: `Recuperadas ${n} rutinas desde Drive.` })
+      const lista = await listarCopias()
+      if (lista.length) setCopias(lista)
+      else setAviso({ texto: 'En tu Drive todavía no hay ningún respaldo.', error: true })
     } catch (e) {
-      setAviso({ texto: e instanceof Error ? e.message : 'No se pudo bajar.', error: true })
+      error(e, 'No se pudo leer Drive.')
     } finally {
-      setOcupado(null)
+      setBajando(false)
     }
   }
 
-  if (!configurado) {
+  const alElegir = async (copia: CopiaEnDrive) => {
+    const cual = `la copia de ${copia.nombre} (${cuandoTexto(copia.fecha).toLowerCase()})`
+    if (!confirm(`Reemplaza TODO lo de este dispositivo por ${cual}. No se puede deshacer.`)) return
+    setCopias(null)
+    setBajando(true)
+    try {
+      const n = await importar(await bajarCopia(copia.id))
+      setAviso({ texto: `Listo: se recuperó ${cual}, con ${contar(n, 'rutina')}.` })
+    } catch (e) {
+      error(e, 'No se pudo bajar.')
+    } finally {
+      setBajando(false)
+    }
+  }
+
+  if (!respaldo.configurado) {
     return (
       <div className="grupo">
         <h2>Respaldo en Google Drive</h2>
@@ -125,44 +113,78 @@ export default function RespaldoDrive() {
     )
   }
 
+  const ocupado = respaldo.subiendo || bajando
+  // Si el automatico fallo, aqui se dice por que.
+  const avisoVisible =
+    aviso ??
+    (respaldo.fallo && respaldo.pendiente
+      ? { texto: `No se pudo respaldar. ${respaldo.fallo}`, error: true }
+      : null)
+
   return (
     <div className="grupo">
       <h2>Respaldo en Google Drive</h2>
 
       <div className="dato">
         <span>Último respaldo en Drive</span>
-        <strong className={ultimo ? 'si' : 'no'}>{cuandoTexto(ultimo)}</strong>
+        <strong className={respaldo.ultimo ? 'si' : 'no'}>{cuandoTexto(respaldo.ultimo)}</strong>
       </div>
-      {cuentas && (
-        <div className="dato">
-          <span>Por subir</span>
-          <strong>
-            {cuentas.rutinas} rutinas, {cuentas.ejercicios} ejercicios
-          </strong>
+      <div className="dato">
+        <span>Estado</span>
+        {respaldo.subiendo ? (
+          <strong>Subiendo…</strong>
+        ) : respaldo.pendiente ? (
+          <strong className="no">Cambios sin respaldar</strong>
+        ) : (
+          <strong className="si">Al día</strong>
+        )}
+      </div>
+
+      {avisoVisible && (
+        <div className={`aviso${avisoVisible.error ? ' error' : ''}`} style={{ marginBottom: 12 }}>
+          {avisoVisible.texto}
         </div>
       )}
 
-      {aviso && (
-        <div className={`aviso${aviso.error ? ' error' : ''}`} style={{ marginBottom: 12 }}>
-          {aviso.texto}
+      {copias ? (
+        <div className="copias">
+          <p>Elige qué copia traer a este dispositivo:</p>
+          {copias.map((c) => (
+            <button key={c.id} className="copia" onClick={() => alElegir(c)}>
+              <strong>
+                {c.nombre}
+                {c.propia && ' · este dispositivo'}
+              </strong>
+              <span>
+                {cuandoTexto(c.fecha)}
+                {c.rutinas !== null && ` · ${contar(c.rutinas, 'rutina')}`}
+              </span>
+            </button>
+          ))}
+          <button className="btn secundario" onClick={() => setCopias(null)}>
+            Cancelar
+          </button>
         </div>
+      ) : (
+        <>
+          <button className="btn" onClick={alSubir} disabled={ocupado}>
+            {respaldo.subiendo ? 'Subiendo…' : 'Respaldar ahora en Drive'}
+          </button>
+          <button
+            className="btn secundario"
+            style={{ marginTop: 10 }}
+            onClick={alRecuperar}
+            disabled={ocupado}
+          >
+            {bajando ? 'Leyendo Drive…' : 'Recuperar desde Drive'}
+          </button>
+        </>
       )}
-
-      <button className="btn" onClick={alSubir} disabled={ocupado !== null}>
-        {ocupado === 'subir' ? 'Subiendo…' : 'Respaldar ahora en Drive'}
-      </button>
-      <button
-        className="btn secundario"
-        style={{ marginTop: 10 }}
-        onClick={alBajar}
-        disabled={ocupado !== null}
-      >
-        {ocupado === 'bajar' ? 'Bajando…' : 'Recuperar desde Drive'}
-      </button>
 
       <p className="nota" style={{ marginTop: 10 }}>
-        La app solo ve el archivo que ella misma crea; no puede leer nada más de tu Drive.
-        Recuperar reemplaza todo lo de este dispositivo.
+        Este dispositivo guarda su copia en tu Drive como «{nombreArchivo()}», en Mi
+        unidad. Cada dispositivo tiene la suya, así que no se pisan. La app solo ve los
+        archivos que ella misma crea, y recuperar reemplaza todo lo de este dispositivo.
       </p>
 
       <button
@@ -171,10 +193,9 @@ export default function RespaldoDrive() {
         onClick={() => {
           if (!confirm('Se olvida la conexión con Drive en este dispositivo. El respaldo que ya subiste no se borra.')) return
           desconectar()
-          guardarClientId('')
-          setConfigurado(false)
-          setUltimo(null)
           setCampo('')
+          setCopias(null)
+          setAviso(null)
         }}
       >
         Desconectar de Drive

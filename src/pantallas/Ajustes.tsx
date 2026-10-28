@@ -8,11 +8,9 @@ import {
   marcarRespaldo,
   type EstadoAlmacenamiento,
 } from '../almacenamiento'
-import { cargarEjemplo } from '../ejemplo'
+import { contar } from '../formato'
+import { useRespaldo } from '../useRespaldo'
 import RespaldoDrive from '../componentes/RespaldoDrive'
-
-/** Tiene que coincidir con VERSIONES_ANTERIORES de .github/workflows/deploy.yml. */
-const VERSIONES_ANTERIORES = ['v0.1', 'v0.2', 'v0.3', 'v0.4', 'v0.5', 'v0.6', 'v0.7', 'v0.8']
 
 export default function Ajustes() {
   const archivo = useRef<HTMLInputElement>(null)
@@ -27,7 +25,11 @@ export default function Ajustes() {
   )
 
   const [almacen, setAlmacen] = useState<EstadoAlmacenamiento | null>(null)
-  const [dias, setDias] = useState<number | null>(diasSinRespaldo)
+
+  // Un respaldo en Drive tambien cuenta como ultimo respaldo; esto vuelve a pintar
+  // la pantalla cuando termina uno.
+  useRespaldo()
+  const dias = diasSinRespaldo()
 
   useEffect(() => {
     estadoAlmacenamiento().then(setAlmacen)
@@ -44,14 +46,13 @@ export default function Ajustes() {
     a.click()
     URL.revokeObjectURL(url)
     marcarRespaldo()
-    setDias(0)
     setAviso({ texto: 'Respaldo descargado.' })
   }
 
   const alImportar = async (f: File) => {
     try {
       const n = await importar(JSON.parse(await f.text()))
-      setAviso({ texto: `Listo: se importaron ${n} rutinas.` })
+      setAviso({ texto: `Listo: se importó el respaldo, con ${contar(n, 'rutina')}.` })
     } catch (e) {
       setAviso({ texto: e instanceof Error ? e.message : 'No se pudo leer el archivo.', error: true })
     }
@@ -64,9 +65,14 @@ export default function Ajustes() {
   }
 
   const alCargarEjemplo = async () => {
+    // El guard deja el modulo fuera del paquete publicado.
+    if (!import.meta.env.DEV) return
     if (!confirm('Reemplaza lo que tengas por un historial inventado de dos meses.')) return
+    const { cargarEjemplo } = await import('../ejemplo')
     const { rutinas, ejercicios } = await cargarEjemplo()
-    setAviso({ texto: `Cargado: ${ejercicios} ejercicios en ${rutinas} rutinas.` })
+    setAviso({
+      texto: `Cargado: ${contar(ejercicios, 'ejercicio')} en ${contar(rutinas, 'rutina')}.`,
+    })
   }
 
   return (
@@ -78,7 +84,7 @@ export default function Ajustes() {
         </div>
         <div className="sub">
           {cuentas
-            ? `${cuentas.ejercicios} ejercicios en ${cuentas.rutinas} rutinas`
+            ? `${contar(cuentas.ejercicios, 'ejercicio')} en ${contar(cuentas.rutinas, 'rutina')}`
             : ' '}
         </div>
       </div>
@@ -117,7 +123,13 @@ export default function Ajustes() {
           <div className="dato">
             <span>Último respaldo</span>
             <strong className={dias === null || dias >= DIAS_PARA_RECORDAR ? 'no' : 'si'}>
-              {dias === null ? 'Nunca' : dias === 0 ? 'Hoy' : `Hace ${dias} días`}
+              {dias === null
+                ? 'Nunca'
+                : dias === 0
+                  ? 'Hoy'
+                  : dias === 1
+                    ? 'Ayer'
+                    : `Hace ${dias} días`}
             </strong>
           </div>
           <p>
@@ -151,28 +163,6 @@ export default function Ajustes() {
         </div>
 
         <RespaldoDrive />
-
-        {/* Las versiones viven en el mismo origen, asi que comparten IndexedDB:
-            se puede saltar entre ellas sin perder ni duplicar el historial. */}
-        {import.meta.env.PROD && (
-          <div className="grupo">
-            <h2>Comparar versiones</h2>
-            <p>
-              Estás en la v{__VERSION__}. Las versiones publicadas comparten el mismo historial,
-              así que puedes saltar entre ellas y seguir donde ibas.
-            </p>
-            {VERSIONES_ANTERIORES.map((v) => (
-              <a
-                key={v}
-                className="btn secundario"
-                style={{ marginBottom: 8 }}
-                href={`${import.meta.env.BASE_URL}${v}/`}
-              >
-                Abrir la {v}
-              </a>
-            ))}
-          </div>
-        )}
 
         {/* Solo en desarrollo: sirve para juzgar la app llena, no para el uso real. */}
         {import.meta.env.DEV && (
