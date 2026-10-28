@@ -84,9 +84,10 @@ Pocas pantallas, poca fricción, nada de funciones de más.
 
 ## Versiones
 
-El usuario prueba varias versiones `0.x` antes de elegir cuál mandar a producción
-(usarla de verdad en el gimnasio). La `1.0` se declara después de evaluar las `0.x`,
-usar la elegida al menos dos semanas, y corregir lo que aparezca.
+El usuario probó varias versiones `0.x` antes de mandar una a producción. El plan original
+era usar la elegida dos semanas antes de declarar la `1.0`; **el 2026-10-28 el usuario
+decidió sacar la `1.0` ese mismo día, sin el periodo de prueba.** Lo que aparezca del uso
+real se corrige en versiones `1.x`.
 
 - Cada versión se marca con un tag de git (`v0.1`, `v0.2`, ...).
 - `package.json` lleva el número y Vite lo inyecta como `__VERSION__`.
@@ -109,8 +110,8 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 | v0.5 | Paleta berenjena con ámbar y verde: la v0.4 quedó demasiado gris | Etiquetada |
 | v0.6 | Protección de datos: almacenamiento persistente, confirmaciones, aviso de respaldo, medianoche | Etiquetada |
 | v0.7 | Fase 2: calendario mensual y progreso por ejercicio con gráfico | Etiquetada |
-| v0.8 | Respaldo automático en Google Drive (fase 3, adelantada a petición del usuario) | Actual |
-| v1.0 | La v0.7 tras dos semanas de uso real, más lo que salga de ese uso | Pendiente |
+| v0.8 | Respaldo automático en Google Drive (fase 3, adelantada a petición del usuario) | Etiquetada |
+| **v1.0** | **La v0.8 declarada estable. Sale el 2026-10-28 por decisión del usuario** | **Publicada, en uso** |
 
 **Decisión tomada:** la **v0.5 es la base de la 1.0**. Las versiones anteriores quedan
 publicadas solo como referencia; no se sigue desarrollando sobre ellas.
@@ -128,32 +129,36 @@ publicadas solo como referencia; no se sigue desarrollando sobre ellas.
 | 3 | Google Drive | 🔸 Parcial en la v0.8: **respaldo** automático (una vía) sí. La sincronización en dos vías entre dispositivos no, y sigue fuera de la 1.0 |
 | 4 | Pulido según lo que moleste al usarla (plantillas, densidad, temporizador, notas) | ⬜ |
 
-## Camino a la 1.0
+## La 1.0
 
-Con la fase 2 cerrada **no queda nada del diseño de la fase 0 por construir**. Todo lo
-que se decidió al principio existe y funciona. Lo que falta para la 1.0 ya no es
-programar: es usar la app y corregir lo que aparezca.
+**Salió el 2026-10-28**, por decisión del usuario, sin las dos semanas de prueba que
+preveía el plan original. Contiene todo lo diseñado en la fase 0 más el respaldo en
+Drive, que estaba previsto para después de la 1.0 y se adelantó a pedido del usuario.
 
-1. **Ahora:** dos semanas usando la v0.7 en el gimnasio, desde el teléfono. Solo
-   teléfono; el PC no entra en la evaluación.
-2. **Después:** corregir lo que moleste del uso real. Eso manda por sobre cualquier
-   función nueva que se nos ocurra.
-3. **Se declara 1.0** cuando la app aguante un mes sin sorpresas y sin pérdidas de datos.
+Lo que la 1.0 lleva **sin verificar con uso real**, y conviene vigilar:
+- **El respaldo en Drive no se ha probado de punta a punta.** El código falla de forma
+  limpia y está probado sin conexión con Google, pero nunca corrió con un ID de cliente
+  real: depende de que el usuario cree uno en Google Cloud (ver la v0.8 más abajo).
+  Mientras eso no pase, el respaldo que existe de verdad es el manual de Ajustes.
+- El calendario y el gráfico de progreso solo se han visto con datos de ejemplo, no con
+  el historial real.
+- La densidad compacta nunca se probó en el gimnasio.
 
-Fuera de la 1.0 por decisión explícita: Google Drive (fase 3) y todo lo de la fase 4.
-
-**Ojo con el matiz:** la fase 2 está *construida y verificada técnicamente*, pero probada
-solo con los datos de ejemplo. El calendario y el gráfico todavía no se han visto con el
-historial real del usuario. "Terminada" significa que existe y no se rompe, no que ya
-haya demostrado ser útil.
+**Qué viene después:** lo que moleste del uso real, en versiones `1.1`, `1.2`... Eso manda
+por sobre cualquier función nueva. Siguen fuera: la sincronización en dos vías entre
+dispositivos (la 1.0 solo respalda) y el pulido de la fase 4.
 
 ---
 
 ## Estado actual
 
-**v0.8 lista. La v0.7 esta publicada y verificada en** https://acordovav13.github.io/entrenamientos/,
-con las seis versiones accesibles y compartiendo historial. Repositorio:
-`acordovav13/entrenamientos` (público), desplegado por GitHub Actions en cada push a `main`.
+**v1.0 publicada** en https://acordovav13.github.io/entrenamientos/, con las ocho
+versiones beta (`v0.1` a `v0.8`) accesibles en subcarpetas y compartiendo historial.
+Repositorio: `acordovav13/entrenamientos` (público), desplegado por GitHub Actions en
+cada push a `main`.
+
+**Pendiente del usuario:** crear el ID de cliente de OAuth en Google Cloud y pegarlo en
+Ajustes, en el PC y en el teléfono. Sin eso, el respaldo en Drive no funciona.
 
 Verificado en producción: cada `/vX.Y/` sirve su propio bundle (o sea que la exclusión
 del service worker funciona), el manifest queda en `standalone` con scope
