@@ -96,6 +96,9 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
   las dos listas tienen que coincidir.
 - Como IndexedDB se guarda por origen y no por ruta, **todas las versiones publicadas
   comparten el mismo historial**. La comparación es con los mismos datos.
+- **Publicar es `git push` a secas**, no `git push --tags`: con `--tags` solo suben las
+  etiquetas y la rama se queda atrás, asi que el despliegue (que se dispara al
+  empujar `main`) nunca corre. Para subir rama y etiquetas de una: `git push --follow-tags`.
 
 | Versión | Qué trae | Estado |
 | --- | --- | --- |
@@ -104,7 +107,7 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 | v0.3 | Historial de solo lectura otra vez, repisa de días en Entrenar, varias rutinas por día sin cerrar ninguna | Etiquetada |
 | v0.4 | Paleta cálida gris, sin botón fijo ni etiqueta "En curso", rutinas cerradas compactas | Etiquetada |
 | v0.5 | Paleta berenjena con ámbar y verde: la v0.4 quedó demasiado gris | Etiquetada |
-| v0.6 | Protección de datos: almacenamiento persistente, confirmaciones, aviso de respaldo, medianoche | Actual |
+| v0.6 | Protección de datos: almacenamiento persistente, confirmaciones, aviso de respaldo, medianoche | Publicada, en uso |
 | v1.0 | La v0.6 tras dos semanas de uso real, más lo que salga de ese uso | Pendiente |
 
 **Decisión tomada:** la **v0.5 es la base de la 1.0**. Las versiones anteriores quedan
@@ -139,8 +142,8 @@ Fuera de la 1.0 por decisión explícita: Google Drive (fase 3) y todo lo de la 
 
 ## Estado actual
 
-**v0.6 lista, sin publicar.** La v0.5 quedo publicada y funcionando en https://acordovav13.github.io/entrenamientos/,
-con las cinco versiones accesibles y compartiendo historial. Repositorio:
+**v0.6 publicada y verificada en producción:** https://acordovav13.github.io/entrenamientos/,
+con las seis versiones accesibles y compartiendo historial. Repositorio:
 `acordovav13/entrenamientos` (público), desplegado por GitHub Actions en cada push a `main`.
 
 Verificado en producción: cada `/vX.Y/` sirve su propio bundle (o sea que la exclusión
@@ -229,10 +232,6 @@ Todo apunta a un solo riesgo: el historial es la única copia que existe.
 - Pestaña **Ajustes**: exportar e importar respaldo JSON, borrar todo, contadores.
 - PWA instalable, con service worker y funcionamiento sin conexión.
 - El nombre de la rutina se guarda en cada tecla, no al salir del campo.
-
-### Pendiente de que el usuario haga
-- Crear el repositorio en GitHub y hacer el primer push para que Pages publique la app.
-  Hasta entonces la app solo corre en `localhost` y no se puede instalar en el teléfono.
 
 ### Deuda conocida
 - La densidad es compacta según lo pedido, pero aún no se probó en el gimnasio.
