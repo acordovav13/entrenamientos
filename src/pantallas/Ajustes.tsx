@@ -9,9 +9,10 @@ import {
   type EstadoAlmacenamiento,
 } from '../almacenamiento'
 import { cargarEjemplo } from '../ejemplo'
+import RespaldoDrive from '../componentes/RespaldoDrive'
 
 /** Tiene que coincidir con VERSIONES_ANTERIORES de .github/workflows/deploy.yml. */
-const VERSIONES_ANTERIORES = ['v0.1', 'v0.2', 'v0.3', 'v0.4', 'v0.5', 'v0.6']
+const VERSIONES_ANTERIORES = ['v0.1', 'v0.2', 'v0.3', 'v0.4', 'v0.5', 'v0.6', 'v0.7']
 
 export default function Ajustes() {
   const archivo = useRef<HTMLInputElement>(null)
@@ -149,13 +150,7 @@ export default function Ajustes() {
           </p>
         </div>
 
-        <div className="grupo">
-          <h2>Sincronización con Google Drive</h2>
-          <p style={{ margin: 0 }}>
-            Todavía no está. Llega en la fase 3 y hará que teléfono y PC compartan el mismo
-            historial sin mover archivos. Mientras tanto, el respaldo de arriba cumple esa función.
-          </p>
-        </div>
+        <RespaldoDrive />
 
         {/* Las versiones viven en el mismo origen, asi que comparten IndexedDB:
             se puede saltar entre ellas sin perder ni duplicar el historial. */}

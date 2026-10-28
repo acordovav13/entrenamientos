@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db'
 import { pedirPersistencia, respaldoAtrasado } from './almacenamiento'
+import { respaldarSiHayCambios } from './drive'
 import Entrenar from './pantallas/Entrenar'
 import Historial from './pantallas/Historial'
 import Ajustes from './pantallas/Ajustes'
@@ -24,6 +25,17 @@ export default function App() {
   // lo descarte cuando al telefono le falte espacio.
   useEffect(() => {
     pedirPersistencia()
+  }, [])
+
+  // Respaldo automatico al abrir y al volver del segundo plano. No abre ventanas:
+  // si Google necesita que autorices de nuevo, se espera a que entres a Ajustes.
+  useEffect(() => {
+    const intentar = () => {
+      if (document.visibilityState === 'visible') respaldarSiHayCambios()
+    }
+    intentar()
+    document.addEventListener('visibilitychange', intentar)
+    return () => document.removeEventListener('visibilitychange', intentar)
   }, [])
 
   const hayDatos = useLiveQuery(async () => (await db.rutinas.count()) > 0, [], false)

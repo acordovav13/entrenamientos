@@ -108,7 +108,8 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 | v0.4 | Paleta cálida gris, sin botón fijo ni etiqueta "En curso", rutinas cerradas compactas | Etiquetada |
 | v0.5 | Paleta berenjena con ámbar y verde: la v0.4 quedó demasiado gris | Etiquetada |
 | v0.6 | Protección de datos: almacenamiento persistente, confirmaciones, aviso de respaldo, medianoche | Etiquetada |
-| v0.7 | Fase 2: calendario mensual y progreso por ejercicio con gráfico | **Publicada, en uso** |
+| v0.7 | Fase 2: calendario mensual y progreso por ejercicio con gráfico | Etiquetada |
+| v0.8 | Respaldo automático en Google Drive (fase 3, adelantada a petición del usuario) | Actual |
 | v1.0 | La v0.7 tras dos semanas de uso real, más lo que salga de ese uso | Pendiente |
 
 **Decisión tomada:** la **v0.5 es la base de la 1.0**. Las versiones anteriores quedan
@@ -124,7 +125,7 @@ publicadas solo como referencia; no se sigue desarrollando sobre ellas.
 | 1 | Registrar y ver: pestaña de registro, historial en lista, PWA, respaldo manual | ✅ Cerrada |
 | 1.5 | Protección de datos (v0.6): antes de acumular entrenamientos de verdad | ✅ Cerrada |
 | 2 | Historial completo: calendario mensual y progreso por ejercicio | ✅ Cerrada en la v0.7. La edición de días pasados se descartó en la v0.3: el historial es de solo lectura |
-| 3 | Google Drive: setup de OAuth y sincronización automática local-primero | ⬜ Fuera de la 1.0, por decisión del usuario |
+| 3 | Google Drive | 🔸 Parcial en la v0.8: **respaldo** automático (una vía) sí. La sincronización en dos vías entre dispositivos no, y sigue fuera de la 1.0 |
 | 4 | Pulido según lo que moleste al usarla (plantillas, densidad, temporizador, notas) | ⬜ |
 
 ## Camino a la 1.0
@@ -150,7 +151,7 @@ haya demostrado ser útil.
 
 ## Estado actual
 
-**v0.7 publicada y verificada en producción:** https://acordovav13.github.io/entrenamientos/,
+**v0.8 lista. La v0.7 esta publicada y verificada en** https://acordovav13.github.io/entrenamientos/,
 con las seis versiones accesibles y compartiendo historial. Repositorio:
 `acordovav13/entrenamientos` (público), desplegado por GitHub Actions en cada push a `main`.
 
@@ -158,7 +159,27 @@ Verificado en producción: cada `/vX.Y/` sirve su propio bundle (o sea que la ex
 del service worker funciona), el manifest queda en `standalone` con scope
 `/entrenamientos/`, y el service worker se registra. La app es instalable.
 
-### Lo que trae la v0.7 (fase 2)
+### Lo que trae la v0.8 (respaldo en Drive)
+Es **respaldo, no sincronización**: la app sube una copia y solo baja cuando el usuario
+lo pide a mano. Así nunca puede destruir datos resolviendo mal una mezcla entre dos
+dispositivos. La sincronización en dos vías sigue pendiente y fuera de la 1.0.
+- Permiso `drive.file`: la app solo ve el archivo que ella misma crea. No puede leer
+  nada más del Drive del usuario.
+- El **ID de cliente de OAuth lo pega el usuario en Ajustes** y se guarda en
+  localStorage de ese dispositivo. Crear ese ID en Google Cloud es el único paso que
+  Claude no puede hacer: es la cuenta de Google del usuario.
+- **Respaldo automático** al abrir la app y al volver del segundo plano, solo si los
+  datos cambiaron (se compara una huella: nº de rutinas, nº de ejercicios y el
+  `actualizado` más reciente). Nunca abre ventanas: si Google necesita autorización de
+  nuevo, se salta el intento en silencio y espera a que el usuario entre a Ajustes.
+- **La ventana de Google se abre de forma síncrona dentro del clic.** Si se abriera
+  después de un `await` (por ejemplo tras leer la base), el navegador la bloquea por
+  emergente. Por eso `pedirToken` tiene un camino síncrono cuando el guion ya está
+  cargado, y `precargarGis()` se llama al entrar a Ajustes.
+- Los códigos de error de Google se traducen al castellano: `popup_failed_to_open` y
+  compañía no le dicen nada a quien usa la app.
+
+### Lo que trajo la v0.7 (fase 2)
 El Historial gana una repisa con tres vistas: **Lista / Calendario / Progreso**. Sigue
 siendo de solo lectura y sin rachas ni totales motivacionales.
 - **Calendario mensual** (`componentes/Calendario.tsx`): semana de lunes a domingo, día
