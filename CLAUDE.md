@@ -107,7 +107,8 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 | v0.3 | Historial de solo lectura otra vez, repisa de días en Entrenar, varias rutinas por día sin cerrar ninguna | Etiquetada |
 | v0.4 | Paleta cálida gris, sin botón fijo ni etiqueta "En curso", rutinas cerradas compactas | Etiquetada |
 | v0.5 | Paleta berenjena con ámbar y verde: la v0.4 quedó demasiado gris | Etiquetada |
-| v0.6 | Protección de datos: almacenamiento persistente, confirmaciones, aviso de respaldo, medianoche | Publicada, en uso |
+| v0.6 | Protección de datos: almacenamiento persistente, confirmaciones, aviso de respaldo, medianoche | Etiquetada |
+| v0.7 | Fase 2: calendario mensual y progreso por ejercicio con gráfico | Actual |
 | v1.0 | La v0.6 tras dos semanas de uso real, más lo que salga de ese uso | Pendiente |
 
 **Decisión tomada:** la **v0.5 es la base de la 1.0**. Las versiones anteriores quedan
@@ -122,7 +123,7 @@ publicadas solo como referencia; no se sigue desarrollando sobre ellas.
 | 0 | Diseño y decisiones | ✅ Cerrada |
 | 1 | Registrar y ver: pestaña de registro, historial en lista, PWA, respaldo manual | ✅ Cerrada |
 | 1.5 | Protección de datos (v0.6): antes de acumular entrenamientos de verdad | ✅ Cerrada |
-| 2 | Historial completo: calendario mensual y progreso por ejercicio | ⬜ Pendiente. La edición de días pasados se descartó en la v0.3: el historial es de solo lectura por decisión del usuario |
+| 2 | Historial completo: calendario mensual y progreso por ejercicio | ✅ Cerrada en la v0.7. La edición de días pasados se descartó en la v0.3: el historial es de solo lectura |
 | 3 | Google Drive: setup de OAuth y sincronización automática local-primero | ⬜ Fuera de la 1.0, por decisión del usuario |
 | 4 | Pulido según lo que moleste al usarla (plantillas, densidad, temporizador, notas) | ⬜ |
 
@@ -142,7 +143,7 @@ Fuera de la 1.0 por decisión explícita: Google Drive (fase 3) y todo lo de la 
 
 ## Estado actual
 
-**v0.6 publicada y verificada en producción:** https://acordovav13.github.io/entrenamientos/,
+**v0.7 lista, pendiente de publicar.** La v0.6 esta publicada y verificada en https://acordovav13.github.io/entrenamientos/,
 con las seis versiones accesibles y compartiendo historial. Repositorio:
 `acordovav13/entrenamientos` (público), desplegado por GitHub Actions en cada push a `main`.
 
@@ -150,7 +151,24 @@ Verificado en producción: cada `/vX.Y/` sirve su propio bundle (o sea que la ex
 del service worker funciona), el manifest queda en `standalone` con scope
 `/entrenamientos/`, y el service worker se registra. La app es instalable.
 
-### Lo que trae la v0.6
+### Lo que trae la v0.7 (fase 2)
+El Historial gana una repisa con tres vistas: **Lista / Calendario / Progreso**. Sigue
+siendo de solo lectura y sin rachas ni totales motivacionales.
+- **Calendario mensual** (`componentes/Calendario.tsx`): semana de lunes a domingo, día
+  entrenado relleno en verde, día a medias solo perfilado, hoy con borde ámbar. El botón
+  de mes siguiente se desactiva al llegar al mes actual. Al tocar un día se despliega su
+  detalle debajo. En pantallas anchas se acota a 430px: sin eso, las celdas llegaban a
+  90px y el calendario ocupaba la pantalla entera.
+- **Progreso por ejercicio** (`componentes/GraficoProgreso.tsx`): SVG a mano, sin librería.
+  Selector ordenado por cuántas veces hiciste cada ejercicio. Debajo, la lista día por día.
+- **Qué mide el gráfico depende del ejercicio**, y se dice en pantalla: kilos de la serie
+  más pesada cuando hay peso, repeticiones totales si es peso corporal (un gráfico de kilos
+  en dominadas sería una línea plana en 0), y minutos o kilómetros si es cardio.
+- **Solo cuenta lo marcado como hecho.** El progreso es lo que levantaste, no lo que
+  planeaste. Con menos de dos sesiones no se dibuja nada y se explica por qué.
+- Los días planificados a futuro no entran ni en el calendario ni en el progreso.
+
+### Lo que trajo la v0.6
 Todo apunta a un solo riesgo: el historial es la única copia que existe.
 - **Almacenamiento persistente.** La app pide `navigator.storage.persist()` al arrancar,
   para que el sistema no descarte el IndexedDB cuando falte espacio. El navegador decide:
@@ -236,7 +254,6 @@ Todo apunta a un solo riesgo: el historial es la única copia que existe.
 ### Deuda conocida
 - La densidad es compacta según lo pedido, pero aún no se probó en el gimnasio.
   Si resulta apretada, en la fase 4 hay un interruptor de densidad.
-- Faltan de la fase 2: calendario mensual y gráfico de progreso por ejercicio.
 - Cada origen tiene su propio IndexedDB, así que `localhost`, la IP de la red local y
   GitHub Pages son historiales separados. Se resuelve en la fase 3 con Drive; mientras
   tanto el puente es exportar/importar desde Ajustes.

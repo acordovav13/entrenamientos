@@ -223,6 +223,181 @@ select:focus {
   padding: 10px 9px;
 }
 
+/* Variante de una sola linea, para elegir como mirar el historial. */
+.repisa.sub button {
+  min-height: 42px;
+  padding: 8px 4px;
+}
+
+/* --- Calendario --- */
+
+.calendario {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 10px 10px 6px;
+  margin-bottom: 14px;
+}
+
+.calendario-cab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.calendario-cab h2 {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.calendario-cab button:disabled {
+  opacity: 0.25;
+}
+
+.calendario-dias,
+.calendario-rejilla {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.calendario-dias span {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 650;
+  color: var(--tenue);
+  padding-bottom: 3px;
+}
+
+.celda {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--tenue);
+  opacity: 0.55;
+}
+
+/* Un dia entrenado se rellena; a medias, solo se perfila. */
+.celda.entrenado {
+  opacity: 1;
+  background: var(--hecho);
+  color: var(--sobre-hecho);
+  font-weight: 650;
+}
+
+.celda.entrenado.parcial {
+  background: transparent;
+  color: var(--hecho);
+  border: 1.5px solid var(--hecho-oscuro);
+}
+
+.celda.hoy {
+  opacity: 1;
+  outline: 1.5px solid var(--acento);
+  outline-offset: -1.5px;
+}
+
+.celda.elegida {
+  box-shadow: 0 0 0 2px var(--acento);
+}
+
+.leyenda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  margin: 8px 0 2px;
+  font-size: 11px;
+  color: var(--tenue);
+}
+
+.punto-leyenda {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--hecho);
+  margin-left: 8px;
+}
+
+.punto-leyenda.parcial {
+  background: transparent;
+  border: 1.5px solid var(--hecho-oscuro);
+}
+
+/* --- Grafico de progreso --- */
+
+.grafico {
+  width: 100%;
+  height: 150px;
+  display: block;
+  overflow: visible;
+}
+
+.grafico-guia {
+  stroke: var(--borde);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.grafico-etiqueta {
+  fill: var(--tenue);
+  font-size: 9px;
+  font-family: inherit;
+}
+
+.grafico-area {
+  fill: color-mix(in srgb, var(--acento) 16%, transparent);
+}
+
+.grafico-linea {
+  fill: none;
+  stroke: var(--acento);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.grafico-punto {
+  fill: var(--acento);
+  vector-effect: non-scaling-stroke;
+}
+
+.resumen-progreso {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--borde);
+  font-size: 13px;
+  color: var(--tenue);
+  font-variant-numeric: tabular-nums;
+}
+
+.resumen-progreso strong {
+  color: var(--texto);
+  font-size: 15px;
+}
+
+.resumen-progreso .sube {
+  color: var(--hecho);
+}
+
+.resumen-progreso .baja {
+  color: var(--acento);
+}
+
 .contenido {
   flex: 1;
   overflow-y: auto;
@@ -1024,5 +1199,14 @@ a.btn {
 @media (min-width: 640px) {
   .contenido {
     padding-bottom: calc(var(--nav) + 100px);
+  }
+}
+
+/* En pantallas anchas el calendario se iba a celdas de 90px y ocupaba pantallas
+   enteras. Se acota y se centra; en el telefono sigue usando todo el ancho. */
+@media (min-width: 640px) {
+  .calendario {
+    max-width: 430px;
+    margin-inline: auto;
   }
 }

@@ -11,7 +11,7 @@ import {
 import { cargarEjemplo } from '../ejemplo'
 
 /** Tiene que coincidir con VERSIONES_ANTERIORES de .github/workflows/deploy.yml. */
-const VERSIONES_ANTERIORES = ['v0.1', 'v0.2', 'v0.3', 'v0.4', 'v0.5']
+const VERSIONES_ANTERIORES = ['v0.1', 'v0.2', 'v0.3', 'v0.4', 'v0.5', 'v0.6']
 
 export default function Ajustes() {
   const archivo = useRef<HTMLInputElement>(null)
