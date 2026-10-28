@@ -108,8 +108,8 @@ usar la elegida al menos dos semanas, y corregir lo que aparezca.
 | v0.4 | Paleta cálida gris, sin botón fijo ni etiqueta "En curso", rutinas cerradas compactas | Etiquetada |
 | v0.5 | Paleta berenjena con ámbar y verde: la v0.4 quedó demasiado gris | Etiquetada |
 | v0.6 | Protección de datos: almacenamiento persistente, confirmaciones, aviso de respaldo, medianoche | Etiquetada |
-| v0.7 | Fase 2: calendario mensual y progreso por ejercicio con gráfico | Actual |
-| v1.0 | La v0.6 tras dos semanas de uso real, más lo que salga de ese uso | Pendiente |
+| v0.7 | Fase 2: calendario mensual y progreso por ejercicio con gráfico | **Publicada, en uso** |
+| v1.0 | La v0.7 tras dos semanas de uso real, más lo que salga de ese uso | Pendiente |
 
 **Decisión tomada:** la **v0.5 es la base de la 1.0**. Las versiones anteriores quedan
 publicadas solo como referencia; no se sigue desarrollando sobre ellas.
@@ -129,21 +129,28 @@ publicadas solo como referencia; no se sigue desarrollando sobre ellas.
 
 ## Camino a la 1.0
 
-1. **Ahora:** dos semanas usando la v0.6 en el gimnasio, desde el teléfono. Solo teléfono;
-   el PC no entra en la evaluación.
+Con la fase 2 cerrada **no queda nada del diseño de la fase 0 por construir**. Todo lo
+que se decidió al principio existe y funciona. Lo que falta para la 1.0 ya no es
+programar: es usar la app y corregir lo que aparezca.
+
+1. **Ahora:** dos semanas usando la v0.7 en el gimnasio, desde el teléfono. Solo
+   teléfono; el PC no entra en la evaluación.
 2. **Después:** corregir lo que moleste del uso real. Eso manda por sobre cualquier
-   función nueva.
-3. **Luego:** decidir si la fase 2 (calendario y gráfico de progreso) entra en la 1.0 o
-   queda para después. Se decide con dos semanas de datos propios encima, no antes.
-4. **Se declara 1.0** cuando la app aguante un mes sin sorpresas y sin pérdidas de datos.
+   función nueva que se nos ocurra.
+3. **Se declara 1.0** cuando la app aguante un mes sin sorpresas y sin pérdidas de datos.
 
 Fuera de la 1.0 por decisión explícita: Google Drive (fase 3) y todo lo de la fase 4.
+
+**Ojo con el matiz:** la fase 2 está *construida y verificada técnicamente*, pero probada
+solo con los datos de ejemplo. El calendario y el gráfico todavía no se han visto con el
+historial real del usuario. "Terminada" significa que existe y no se rompe, no que ya
+haya demostrado ser útil.
 
 ---
 
 ## Estado actual
 
-**v0.7 lista, pendiente de publicar.** La v0.6 esta publicada y verificada en https://acordovav13.github.io/entrenamientos/,
+**v0.7 publicada y verificada en producción:** https://acordovav13.github.io/entrenamientos/,
 con las seis versiones accesibles y compartiendo historial. Repositorio:
 `acordovav13/entrenamientos` (público), desplegado por GitHub Actions en cada push a `main`.
 
