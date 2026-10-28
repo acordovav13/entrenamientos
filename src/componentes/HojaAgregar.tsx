@@ -114,6 +114,8 @@ export default function HojaAgregar({ onCerrar, onAgregar }: Props) {
                   {' · '}
                   {fechaCorta(s.ultimaFecha)}
                 </span>
+                {/* La nota de la ultima vez se ve justo al volver a agregarlo. */}
+                {s.ultimaNota && <span className="nota-ejercicio">{s.ultimaNota}</span>}
               </span>
             </button>
             <button

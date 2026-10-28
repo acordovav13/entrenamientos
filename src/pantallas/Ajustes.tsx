@@ -8,6 +8,7 @@ import {
   marcarRespaldo,
   type EstadoAlmacenamiento,
 } from '../almacenamiento'
+import { olvidarVistos } from '../drive'
 import { contar } from '../formato'
 import { useRespaldo } from '../useRespaldo'
 import RespaldoDrive from '../componentes/RespaldoDrive'
@@ -28,7 +29,7 @@ export default function Ajustes() {
 
   // Un respaldo en Drive tambien cuenta como ultimo respaldo; esto vuelve a pintar
   // la pantalla cuando termina uno.
-  useRespaldo()
+  const { configurado: conDrive } = useRespaldo()
   const dias = diasSinRespaldo()
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export default function Ajustes() {
   const alImportar = async (f: File) => {
     try {
       const n = await importar(JSON.parse(await f.text()))
+      olvidarVistos()
       setAviso({ texto: `Listo: se importó el respaldo, con ${contar(n, 'rutina')}.` })
     } catch (e) {
       setAviso({ texto: e instanceof Error ? e.message : 'No se pudo leer el archivo.', error: true })
@@ -61,6 +63,7 @@ export default function Ajustes() {
   const alBorrar = async () => {
     if (!confirm('Se borra todo el historial de este dispositivo. Esto no se puede deshacer.')) return
     await borrarTodo()
+    olvidarVistos()
     setAviso({ texto: 'Historial borrado.' })
   }
 
@@ -180,7 +183,10 @@ export default function Ajustes() {
 
         <div className="grupo">
           <h2>Zona peligrosa</h2>
-          <p>Borra todas las rutinas y ejercicios de este dispositivo.</p>
+          <p>
+            Borra todas las rutinas y ejercicios de este dispositivo.
+            {conDrive && ' Lo de tus otros dispositivos vuelve a bajar al sincronizar.'}
+          </p>
           <button className="btn peligro" onClick={alBorrar}>
             Borrar todo el historial
           </button>

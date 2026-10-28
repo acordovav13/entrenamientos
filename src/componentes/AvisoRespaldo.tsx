@@ -1,30 +1,30 @@
 import { useState } from 'react'
-import { respaldarAhora } from '../drive'
+import { sincronizarAhora } from '../drive'
 
 /**
- * Banda sobre las pestañas cuando hay entrenamientos que no están en Drive y la app
- * no puede subirlos sola. Un toque da permiso por una hora, y mientras dure, lo que
- * sigas anotando se sube sin preguntar.
+ * Banda sobre las pestañas cuando hay algo que sincronizar y la app no puede hacerlo
+ * sola. Un toque da permiso por una hora, y mientras dure, todo se sincroniza sin
+ * preguntar.
  */
-export default function AvisoRespaldo({ fallo }: { fallo: string | null }) {
+export default function AvisoRespaldo({ texto, error }: { texto: string; error: boolean }) {
   const [esperando, setEsperando] = useState(false)
 
   const alTocar = async () => {
     setEsperando(true)
     try {
-      await respaldarAhora()
+      await sincronizarAhora()
     } catch {
-      /* el motivo llega en `fallo` y se muestra en la banda */
+      /* el motivo llega como texto de la banda */
     } finally {
       setEsperando(false)
     }
   }
 
   return (
-    <div className={`aviso-respaldo${fallo ? ' con-fallo' : ''}`} role="status">
-      <span>{fallo ? `No se pudo respaldar. ${fallo}` : 'Hay cambios sin respaldar en Drive'}</span>
+    <div className={`aviso-respaldo${error ? ' con-fallo' : ''}`} role="status">
+      <span>{texto}</span>
       <button onClick={alTocar} disabled={esperando}>
-        {esperando ? 'Un momento…' : fallo ? 'Reintentar' : 'Respaldar'}
+        {esperando ? 'Un momento…' : error ? 'Reintentar' : 'Sincronizar'}
       </button>
     </div>
   )

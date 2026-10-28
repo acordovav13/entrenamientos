@@ -50,6 +50,8 @@ export interface PuntoProgreso {
   valor: number
   /** Lo que se vio ese dia, para la lista de abajo del grafico. */
   detalle: string
+  /** Las notas que tuvo el ejercicio ese dia. */
+  notas?: string[]
 }
 
 export interface SerieProgreso {
@@ -149,6 +151,11 @@ export async function progresoDe(nombre: string): Promise<SerieProgreso> {
       const total = hechas.reduce((t, s) => t + s.reps, 0)
       puntos.push({ fecha, valor: total, detalle: `${contar(hechas.length, 'serie')} · ${total} reps` })
     }
+  }
+
+  for (const p of puntos) {
+    const notas = (porFecha.get(p.fecha) ?? []).flatMap((e) => (e.nota ? [e.nota] : []))
+    if (notas.length) p.notas = notas
   }
 
   puntos.sort((a, b) => a.fecha.localeCompare(b.fecha))

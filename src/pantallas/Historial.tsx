@@ -93,6 +93,7 @@ function BloqueDia({ dia }: { dia: Dia }) {
                     </>
                   )}
                 </span>
+                {e.nota && <span className="nota-ejercicio">{e.nota}</span>}
               </div>
             )
           })}
@@ -173,6 +174,11 @@ function VistaProgreso() {
             <div className="resumen" key={p.fecha}>
               <span className="nombre">{fechaCorta(p.fecha)}</span>
               <span className="datos">{p.detalle}</span>
+              {p.notas?.map((n, i) => (
+                <span className="nota-ejercicio" key={i}>
+                  {n}
+                </span>
+              ))}
             </div>
           ))}
         </div>

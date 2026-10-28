@@ -1,14 +1,20 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { Ejercicio, Rutina, Serie, Sugerencia, TipoEjercicio } from './tipos'
+import type { Borrado, Ejercicio, Rutina, Serie, Sugerencia, TipoEjercicio } from './tipos'
 
 const db = new Dexie('entrenamientos') as Dexie & {
   rutinas: EntityTable<Rutina, 'id'>
   ejercicios: EntityTable<Ejercicio, 'id'>
+  borrados: EntityTable<Borrado, 'id'>
 }
 
 db.version(1).stores({
   rutinas: 'id, fecha, [fecha+orden]',
   ejercicios: 'id, rutinaId, nombre, [rutinaId+orden]',
+})
+
+// La 1.1 agrega las rutinas borradas, para que el borrado llegue a los otros dispositivos.
+db.version(2).stores({
+  borrados: 'id',
 })
 
 export { db }
@@ -65,9 +71,10 @@ export async function renombrarRutina(rutinaId: string, nombre: string) {
 }
 
 export async function borrarRutina(rutinaId: string) {
-  await db.transaction('rw', db.rutinas, db.ejercicios, async () => {
+  await db.transaction('rw', db.rutinas, db.ejercicios, db.borrados, async () => {
     await db.ejercicios.where('rutinaId').equals(rutinaId).delete()
     await db.rutinas.delete(rutinaId)
+    await db.borrados.put({ id: rutinaId, cuando: Date.now() })
   })
 }
 
@@ -95,6 +102,7 @@ export interface NuevoEjercicio {
   series?: Serie[]
   tiempoMin?: number
   distanciaKm?: number
+  nota?: string
 }
 
 /**
@@ -123,6 +131,7 @@ export async function agregarEjercicio(
     tiempoMin: datos.tiempoMin,
     distanciaKm: datos.distanciaKm,
     hecho: false,
+    nota: datos.nota?.trim() || undefined,
   }
   await db.ejercicios.add(ejercicio)
   await db.rutinas.update(rutina.id, { actualizado: Date.now() })
@@ -187,6 +196,7 @@ export async function sugerencias(): Promise<Sugerencia[]> {
         distanciaKm: e.distanciaKm,
         veces: 1,
         ultimaFecha: fecha,
+        ultimaNota: e.nota,
       })
       continue
     }
@@ -197,6 +207,7 @@ export async function sugerencias(): Promise<Sugerencia[]> {
       previa.tiempoMin = e.tiempoMin
       previa.distanciaKm = e.distanciaKm
       previa.ultimaFecha = fecha
+      previa.ultimaNota = e.nota
     }
   }
 
@@ -213,31 +224,101 @@ export interface Respaldo {
   exportado: string
   rutinas: Rutina[]
   ejercicios: Ejercicio[]
+  /** Desde la 1.1. Los respaldos anteriores no lo traen. */
+  borrados?: Borrado[]
 }
 
 export async function exportar(): Promise<Respaldo> {
-  const [rutinas, ejercicios] = await Promise.all([db.rutinas.toArray(), db.ejercicios.toArray()])
-  return { formato: 1, exportado: new Date().toISOString(), rutinas, ejercicios }
+  const [rutinas, ejercicios, borrados] = await Promise.all([
+    db.rutinas.toArray(),
+    db.ejercicios.toArray(),
+    db.borrados.toArray(),
+  ])
+  return { formato: 1, exportado: new Date().toISOString(), rutinas, ejercicios, borrados }
+}
+
+export function esRespaldo(datos: unknown): datos is Respaldo {
+  const r = datos as Partial<Respaldo> | null
+  return (
+    !!r &&
+    r.formato === 1 &&
+    Array.isArray(r.rutinas) &&
+    Array.isArray(r.ejercicios) &&
+    (r.borrados === undefined || Array.isArray(r.borrados))
+  )
 }
 
 /** Importa reemplazando todo. Devuelve cuantas rutinas entraron. */
 export async function importar(datos: unknown): Promise<number> {
-  const r = datos as Partial<Respaldo>
-  if (!r || r.formato !== 1 || !Array.isArray(r.rutinas) || !Array.isArray(r.ejercicios)) {
-    throw new Error('El archivo no tiene el formato de respaldo de esta app.')
-  }
-  await db.transaction('rw', db.rutinas, db.ejercicios, async () => {
+  if (!esRespaldo(datos)) throw new Error('El archivo no tiene el formato de respaldo de esta app.')
+  await db.transaction('rw', db.rutinas, db.ejercicios, db.borrados, async () => {
     await db.rutinas.clear()
     await db.ejercicios.clear()
-    await db.rutinas.bulkAdd(r.rutinas as Rutina[])
-    await db.ejercicios.bulkAdd(r.ejercicios as Ejercicio[])
+    await db.borrados.clear()
+    await db.rutinas.bulkAdd(datos.rutinas)
+    await db.ejercicios.bulkAdd(datos.ejercicios)
+    await db.borrados.bulkAdd(datos.borrados ?? [])
   })
-  return r.rutinas.length
+  return datos.rutinas.length
 }
 
+/** Lo borrado se queda anotado: si otro dispositivo lo vuelve a traer, es a proposito. */
 export async function borrarTodo() {
   await db.transaction('rw', db.rutinas, db.ejercicios, async () => {
     await db.rutinas.clear()
     await db.ejercicios.clear()
   })
+}
+
+// --- Sincronizacion ---
+
+export interface ResultadoFusion {
+  nuevas: number
+  actualizadas: number
+  borradas: number
+}
+
+/**
+ * Suma lo de otro dispositivo sin pisar lo propio. Por cada rutina gana la version
+ * tocada mas tarde, con todos sus ejercicios. Lo borrado en un lado se borra en el
+ * otro, salvo que alguien haya vuelto a tocar esa rutina despues de borrarla.
+ */
+export async function fusionar(remoto: Respaldo): Promise<ResultadoFusion> {
+  const resultado: ResultadoFusion = { nuevas: 0, actualizadas: 0, borradas: 0 }
+
+  const porRutina = new Map<string, Ejercicio[]>()
+  for (const e of remoto.ejercicios) {
+    porRutina.set(e.rutinaId, [...(porRutina.get(e.rutinaId) ?? []), e])
+  }
+
+  await db.transaction('rw', db.rutinas, db.ejercicios, db.borrados, async () => {
+    for (const b of remoto.borrados ?? []) {
+      const propio = await db.borrados.get(b.id)
+      if (!propio || propio.cuando < b.cuando) await db.borrados.put(b)
+      const local = await db.rutinas.get(b.id)
+      if (local && local.actualizado <= b.cuando) {
+        await db.ejercicios.where('rutinaId').equals(b.id).delete()
+        await db.rutinas.delete(b.id)
+        resultado.borradas++
+      }
+    }
+
+    for (const r of remoto.rutinas) {
+      const borrado = await db.borrados.get(r.id)
+      if (borrado && borrado.cuando >= r.actualizado) continue
+      const local = await db.rutinas.get(r.id)
+      if (local && local.actualizado >= r.actualizado) continue
+
+      if (local) {
+        await db.ejercicios.where('rutinaId').equals(r.id).delete()
+        resultado.actualizadas++
+      } else {
+        resultado.nuevas++
+      }
+      await db.rutinas.put(r)
+      await db.ejercicios.bulkPut(porRutina.get(r.id) ?? [])
+    }
+  })
+
+  return resultado
 }

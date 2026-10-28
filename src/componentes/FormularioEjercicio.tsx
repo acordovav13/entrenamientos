@@ -13,6 +13,7 @@ interface Props {
     series?: Serie[]
     tiempoMin?: number
     distanciaKm?: number
+    nota?: string
   }
   nombresSugeridos?: string[]
   onGuardar: (datos: NuevoEjercicio) => void
@@ -42,6 +43,7 @@ export default function FormularioEjercicio({
   const [distanciaKm, setDistanciaKm] = useState(
     inicial?.distanciaKm ? String(inicial.distanciaKm) : '',
   )
+  const [nota, setNota] = useState(inicial?.nota ?? '')
 
   const cambiarSerie = (i: number, campo: keyof SerieTexto, valor: string) =>
     setSeries((prev) => prev.map((s, j) => (j === i ? { ...s, [campo]: valor } : s)))
@@ -67,6 +69,7 @@ export default function FormularioEjercicio({
           : [],
       tiempoMin: tipo === 'cardio' && num(tiempoMin) > 0 ? num(tiempoMin) : undefined,
       distanciaKm: tipo === 'cardio' && num(distanciaKm) > 0 ? num(distanciaKm) : undefined,
+      nota: nota.trim() || undefined,
     })
   }
 
@@ -165,6 +168,18 @@ export default function FormularioEjercicio({
             </div>
           </div>
         )}
+
+        <div className="campo">
+          <label htmlFor="nota-ejercicio">Nota (opcional)</label>
+          <input
+            id="nota-ejercicio"
+            value={nota}
+            onChange={(e) => setNota(e.target.value)}
+            placeholder="Molestia en el hombro, subir peso la próxima…"
+            maxLength={200}
+            autoComplete="off"
+          />
+        </div>
 
         {onBorrar && (
           <button className="btn peligro" onClick={onBorrar}>

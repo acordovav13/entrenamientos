@@ -883,6 +883,13 @@ select:focus {
   min-width: 0;
 }
 
+/* Nombre arriba y numeros abajo. Como spans sueltos quedaban pegados en una
+   linea ("Remo con barra1 x 8") y el nombre largo no se cortaba con puntos. */
+.sugerencia .nombre,
+.sugerencia .detalle {
+  display: block;
+}
+
 .sugerencia .nombre {
   font-weight: 550;
   overflow: hidden;
@@ -1115,6 +1122,37 @@ a.btn {
   color: var(--hecho);
 }
 
+/* Nota libre del ejercicio: en su propia linea, mas chica y apagada que los datos. */
+.nota-ejercicio {
+  display: block;
+  margin: 0;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--tenue);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ejercicio > .nota-ejercicio {
+  margin: -2px 0 8px;
+}
+
+/* En las filas de una linea, la nota baja a la siguiente, alineada con el nombre. */
+.resumen,
+.ejercicio-cerrado {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.resumen .nota-ejercicio,
+.ejercicio-cerrado .nota-ejercicio {
+  flex-basis: 100%;
+}
+
+.marca ~ .nota-ejercicio {
+  padding-left: 18px;
+}
+
 .marca.pendiente {
   color: var(--tenue);
 }
@@ -1207,6 +1245,11 @@ a.btn {
 
 .dato strong.no {
   color: var(--acento);
+}
+
+.dato strong.tenue {
+  color: var(--tenue);
+  font-weight: 500;
 }
 
 /* Copias en Drive para elegir cuál recuperar: una por dispositivo. */

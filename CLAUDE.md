@@ -73,6 +73,7 @@ Pocas pantallas, poca fricción, nada de funciones de más.
   y sincroniza cuando hay internet). Requiere client ID de OAuth en Google Cloud y
   entrar con la cuenta de Google en cada dispositivo. Decisión consciente: rompe
   "sin login" a cambio de tener el mismo historial en teléfono y PC sin mover archivos.
+  Hecha en la v1.1, sin servidor: cada dispositivo sube su copia y suma las de los otros.
 
 ### Infraestructura
 - **Stack:** Vite + React + TypeScript, Dexie sobre IndexedDB, vite-plugin-pwa.
@@ -111,7 +112,8 @@ real se corrige en versiones `1.x`.
 | v0.7 | Fase 2: calendario mensual y progreso por ejercicio con gráfico | Etiquetada |
 | v0.8 | Respaldo automático en Google Drive (fase 3, adelantada a petición del usuario) | Etiquetada |
 | v1.0 | La v0.8 declarada estable. Sale el 2026-10-28 por decisión del usuario | Etiquetada |
-| **v1.0.1** | **Arreglos del respaldo en Drive: un archivo por dispositivo, aviso de cambios sin respaldar. Fuera las betas publicadas** | **Publicada, en uso** |
+| v1.0.1 | Arreglos del respaldo en Drive: un archivo por dispositivo, aviso de cambios sin respaldar. Fuera las betas publicadas | Etiquetada |
+| **v1.1** | **Notas por ejercicio y sincronización teléfono ↔ PC por Drive** | **Publicada, en uso** |
 
 **Decisión tomada:** la **v0.5 es la base de la 1.0**. Las versiones anteriores quedan
 como referencia en git; no se sigue desarrollando sobre ellas.
@@ -126,8 +128,8 @@ como referencia en git; no se sigue desarrollando sobre ellas.
 | 1 | Registrar y ver: pestaña de registro, historial en lista, PWA, respaldo manual | ✅ Cerrada |
 | 1.5 | Protección de datos (v0.6): antes de acumular entrenamientos de verdad | ✅ Cerrada |
 | 2 | Historial completo: calendario mensual y progreso por ejercicio | ✅ Cerrada en la v0.7. La edición de días pasados se descartó en la v0.3: el historial es de solo lectura |
-| 3 | Google Drive | 🔸 Parcial en la v0.8: **respaldo** automático (una vía) sí. La sincronización en dos vías entre dispositivos no, y sigue fuera de la 1.0 |
-| 4 | Pulido según lo que moleste al usarla (plantillas, densidad, temporizador, notas) | ⬜ |
+| 3 | Google Drive | ✅ Cerrada en la v1.1: respaldo desde la v0.8 y sincronización en dos vías desde la v1.1 |
+| 4 | Pulido según lo que moleste al usarla (plantillas, densidad, temporizador, notas) | 🔸 Notas en la v1.1. Quedan plantillas, densidad y temporizador |
 
 ## La 1.0
 
@@ -136,10 +138,9 @@ preveía el plan original. Contiene todo lo diseñado en la fase 0 más el respa
 Drive, que estaba previsto para después de la 1.0 y se adelantó a pedido del usuario.
 
 Lo que sigue **sin verificar con uso real**, y conviene vigilar:
-- **Drive con la cuenta real:** la subida manual de la 1.0 funcionó el 2026-10-28 con el
-  ID de cliente del usuario. Lo nuevo de la 1.0.1 (archivo por dispositivo, adopción del
-  archivo de la 1.0, recuperar eligiendo copia) está probado contra un Drive simulado,
-  no contra Google.
+- **La sincronización de la 1.1** está probada contra un Drive simulado con dos
+  dispositivos, no contra Google. La 1.0.1 sí: el usuario la probó en teléfono y PC con
+  su cuenta real el 2026-10-28 y funcionó.
 - El calendario y el gráfico de progreso solo se han visto con datos de ejemplo, no con
   el historial real.
 - La densidad compacta nunca se probó en el gimnasio.
@@ -169,21 +170,51 @@ Arregla los bugs que dejó la 1.0, encontrados revisando el código después de 
 - Limpieza: fuera los botones de betas de Ajustes y sus compilaciones del workflow, README
   al día, y `ejemplo.ts` fuera del paquete publicado (import dinámico tras `import.meta.env.DEV`).
 
-**Qué viene después:** lo que moleste del uso real, en versiones `1.1`, `1.2`... Eso manda
-por sobre cualquier función nueva. Siguen fuera: la sincronización en dos vías entre
-dispositivos (la 1.0 solo respalda) y el pulido de la fase 4.
+### Lo que trae la 1.1
+Elegido por el usuario entre las opciones de la fase 4 y lo que faltaba de la 3.
+- **Notas por ejercicio** (`Ejercicio.nota`): campo "Nota (opcional)" en el formulario.
+  Se ve en la tarjeta antes de las series, en la línea de la rutina cerrada, en el
+  Historial y en el "Día por día" del Progreso. La sugerencia del autocompletado muestra
+  la nota de la última vez (`Sugerencia.ultimaNota`), pero no la copia al ejercicio nuevo.
+- **Sincronización teléfono ↔ PC.** Sobre los archivos por dispositivo de la 1.0.1:
+  sincronizar es traer los archivos de los otros, sumarlos con `fusionar` (en `db.ts`) y
+  subir la copia propia, que así ya incluye lo de todos. Reglas de la fusión:
+  - Por rutina gana la versión con `actualizado` más reciente, y se lleva **todos** sus
+    ejercicios. Si la misma rutina se edita en dos dispositivos antes de sincronizar,
+    lo del más reciente pisa lo del otro. Para un solo usuario es raro y se aceptó.
+  - Lo borrado viaja: `borrarRutina` deja una marca en la tabla `borrados` (versión 2
+    del esquema de Dexie), que va dentro de la copia. Una rutina se borra al llegar la
+    marca si no se tocó después; si se tocó después, sobrevive.
+  - "Borrar todo", importar y recuperar no dejan marcas y llaman a `olvidarVistos`: lo de
+    los otros dispositivos se vuelve a sumar en la próxima sincronización.
+  - Solo se bajan los archivos que cambiaron (`drive-vistos` guarda el `modifiedTime`).
+- **Sin servidor, sincronizar necesita permiso de Google, que dura una hora** y solo se
+  pide con un toque. La banda sobre las pestañas dice "Hay cambios sin subir a Drive" o,
+  si pasaron 15 minutos sin sincronizar y hay otros dispositivos, "Puede haber novedades
+  de <PC con Windows>". Con permiso vigente se sincroniza solo: 20 s después del último
+  cambio, al salir y volver a la app (trae novedades como mucho una vez por minuto si no
+  hay nada propio que subir) y al recuperar la señal.
+- La huella usa la **suma** de `actualizado` y no el máximo: con el máximo, una rutina
+  vieja actualizada desde otro dispositivo no cambiaba la huella y la copia no se subía.
+- Ajustes: el grupo pasa a llamarse "Google Drive", con "Última sincronización", "Estado"
+  y una línea por cada otro dispositivo con cuándo subió.
+- Arreglo de paso: en la lista de sugerencias el nombre y los números salían pegados en
+  una línea ("Remo con barra1 x 8") desde la v0.1. Ahora van en dos líneas.
+
+**Qué viene después:** lo que moleste del uso real, en versiones `1.2`, `1.3`... Eso manda
+por sobre cualquier función nueva. De la fase 4 quedan: repetir una rutina anterior
+(plantillas), temporizador de descanso e interruptor de densidad.
 
 ---
 
 ## Estado actual
 
-**v1.0.1 publicada** en https://acordovav13.github.io/entrenamientos/. Repositorio:
+**v1.1 publicada** en https://acordovav13.github.io/entrenamientos/. Repositorio:
 `acordovav13/entrenamientos` (público), desplegado por GitHub Actions en cada push a `main`.
 
-**Drive funcionando desde el 2026-10-28**: el usuario creó el ID de cliente y lo tiene
-conectado solo en el teléfono (el PC se desconectó por el bug del archivo único de la
-1.0). Con la 1.0.1 ya puede conectar también el PC. Cada archivo queda suelto en la raíz
-de Mi unidad (se crea sin `parents`), y Drive guarda 30 días de versiones anteriores.
+**Drive conectado en el teléfono y en el PC** desde el 2026-10-28, con el ID de cliente
+que creó el usuario. Cada dispositivo tiene su archivo suelto en la raíz de Mi unidad (se
+crea sin `parents`), y Drive guarda 30 días de versiones anteriores de cada uno.
 
 Verificado en producción (v1.0): el manifest queda en `standalone` con scope
 `/entrenamientos/`, y el service worker se registra. La app es instalable.
@@ -312,5 +343,8 @@ Todo apunta a un solo riesgo: el historial es la única copia que existe.
 - La densidad es compacta según lo pedido, pero aún no se probó en el gimnasio.
   Si resulta apretada, en la fase 4 hay un interruptor de densidad.
 - Cada origen tiene su propio IndexedDB, así que `localhost`, la IP de la red local y
-  GitHub Pages son historiales separados. Se resuelve en la fase 3 con Drive; mientras
-  tanto el puente es exportar/importar desde Ajustes.
+  GitHub Pages son historiales separados. Desde la v1.1 los une la sincronización por
+  Drive, pero solo en los orígenes autorizados en Google Cloud (GitHub Pages y
+  `localhost:5173`); la IP de la red local va por http y Google no la acepta.
+- Sincronizar requiere un toque por hora: sin servidor no hay forma de renovar el
+  permiso de Google sola. Es el límite de la decisión "sin backend propio".

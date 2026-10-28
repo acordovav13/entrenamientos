@@ -1,13 +1,13 @@
-import { db, exportar, type Respaldo } from './db'
+import { db, esRespaldo, exportar, fusionar, type Respaldo } from './db'
 import { marcarRespaldo } from './almacenamiento'
 
 /**
- * Respaldo en Google Drive. Es respaldo, no sincronizacion: la app sube una copia
- * y solo baja cuando tu lo pides. Asi nunca puede borrarte nada por una mezcla mal
- * resuelta entre dos dispositivos.
+ * Sincronizacion por Google Drive, sin servidor propio.
  *
- * Cada dispositivo escribe en su propio archivo. En la 1.0 habia uno solo para
- * todos, y el ultimo dispositivo que respaldaba borraba lo que habia subido el otro.
+ * Cada dispositivo sube su copia completa a su propio archivo, y al sincronizar
+ * trae los archivos de los otros y los suma a lo suyo con `fusionar`: por cada
+ * rutina gana la version tocada mas tarde, y lo borrado viaja como borrado. En la
+ * 1.0 habia un solo archivo para todos, y el ultimo que respaldaba borraba lo del otro.
  *
  * El permiso que se pide es `drive.file`: la app solo ve los archivos que ella misma
  * crea. No puede leer nada mas de tu Drive.
@@ -18,6 +18,9 @@ const CLAVE_ARCHIVO = 'drive-archivo-id'
 const CLAVE_ULTIMA = 'drive-ultimo-respaldo'
 const CLAVE_MARCA = 'drive-huella-datos'
 const CLAVE_DISPOSITIVO = 'drive-dispositivo'
+const CLAVE_SINCRONIZADO = 'drive-ultima-sincronizacion'
+const CLAVE_VISTOS = 'drive-vistos'
+const CLAVE_OTROS = 'drive-otros'
 const PREFIJO = 'entrenamientos-respaldo'
 const AMBITO = 'https://www.googleapis.com/auth/drive.file'
 const API = 'https://www.googleapis.com/drive/v3'
@@ -42,19 +45,27 @@ const escribir = (clave: string, valor: string | null) => {
   }
 }
 
+function leerJSON<T>(clave: string, siNo: T): T {
+  try {
+    return (JSON.parse(leer(clave) ?? 'null') as T) ?? siNo
+  } catch {
+    return siNo
+  }
+}
+
+function leerFecha(clave: string): Date | null {
+  const v = leer(clave)
+  if (!v) return null
+  const d = new Date(v)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
 export const clientId = () => leer(CLAVE_CLIENT_ID)
 export const estaConfigurado = () => !!clientId()
 
 export function guardarClientId(id: string) {
   escribir(CLAVE_CLIENT_ID, id.trim() || null)
   cambiar({ configurado: estaConfigurado() })
-}
-
-function ultimoRespaldoDrive(): Date | null {
-  const v = leer(CLAVE_ULTIMA)
-  if (!v) return null
-  const d = new Date(v)
-  return Number.isNaN(d.getTime()) ? null : d
 }
 
 // --- Este dispositivo ---
@@ -95,11 +106,22 @@ export const nombreArchivo = (d = esteDispositivo()) => `${PREFIJO} (${d.nombre}
 
 // --- Estado para la interfaz ---
 
+export interface OtroDispositivo {
+  nombre: string
+  /** Cuando subio su copia por ultima vez, en ISO. */
+  fecha: string
+}
+
 export interface EstadoDrive {
   configurado: boolean
   /** Huella de los datos que se subieron por ultima vez desde este dispositivo. */
   marca: string | null
+  /** Ultima subida de la copia de este dispositivo. */
   ultimo: Date | null
+  /** Ultima sincronizacion completa: traer lo de los otros y subir lo propio. */
+  sincronizado: Date | null
+  /** Los otros dispositivos que vio la ultima sincronizacion. */
+  otros: OtroDispositivo[]
   subiendo: boolean
   /** Por que fallo el ultimo intento, ya en castellano. */
   fallo: string | null
@@ -108,7 +130,9 @@ export interface EstadoDrive {
 let estado: EstadoDrive = {
   configurado: estaConfigurado(),
   marca: leer(CLAVE_MARCA),
-  ultimo: ultimoRespaldoDrive(),
+  ultimo: leerFecha(CLAVE_ULTIMA),
+  sincronizado: leerFecha(CLAVE_SINCRONIZADO),
+  otros: leerJSON<OtroDispositivo[]>(CLAVE_OTROS, []),
   subiendo: false,
   fallo: null,
 }
@@ -173,7 +197,7 @@ function cargarGis(): Promise<void> {
   return cargandoGis
 }
 
-/** Para que al tocar un boton de respaldo el guion de Google ya este cargado. */
+/** Para que al tocar un boton de sincronizar el guion de Google ya este cargado. */
 export function precargarGis() {
   cargarGis().catch(() => {
     /* sin internet se reintenta al tocar */
@@ -231,7 +255,7 @@ function pedirTokenConGis(id: string): Promise<string> {
 
 /**
  * Puede abrir la ventana de Google, asi que solo se llama directo desde un clic.
- * El respaldo automatico nunca la usa: sube solo con el permiso de un toque reciente.
+ * Lo automatico nunca la usa: trabaja solo con el permiso de un toque reciente.
  */
 function pedirToken(): Promise<string> {
   if (token && tokenVigente()) return Promise.resolve(token.valor)
@@ -281,6 +305,20 @@ interface ArchivoDrive {
   modifiedTime?: string
   trashed?: boolean
   appProperties?: Record<string, string>
+}
+
+/** Las copias de esta app en Drive, la mas reciente primero. */
+async function listarArchivos(t: string): Promise<ArchivoDrive[]> {
+  // Con drive.file la lista trae solo lo que creo esta app; el nombre lo confirma.
+  const consulta = new URLSearchParams({
+    q: 'trashed=false',
+    orderBy: 'modifiedTime desc',
+    fields: 'files(id,name,modifiedTime,appProperties)',
+    pageSize: '50',
+  })
+  const r = await pedirADrive(`${API}/files?${consulta}`, t)
+  const { files = [] } = (await r.json()) as { files?: ArchivoDrive[] }
+  return files.filter((f) => f.name?.startsWith(PREFIJO))
 }
 
 /**
@@ -347,18 +385,59 @@ async function subirRespaldo(t: string, datos: Respaldo): Promise<void> {
   escribir(CLAVE_ARCHIVO, id)
 }
 
-// --- Subir ---
+/**
+ * Suma a este dispositivo lo que subieron los otros. Solo baja los archivos que
+ * cambiaron desde la ultima vez. Devuelve cuantas rutinas cambiaron aca.
+ */
+async function traerDeLosOtros(t: string): Promise<number> {
+  const yo = esteDispositivo()
+  const otros = (await listarArchivos(t)).filter(
+    (f) => f.appProperties?.dispositivo && f.appProperties.dispositivo !== yo.id,
+  )
+
+  const vistos = leerJSON<Record<string, string>>(CLAVE_VISTOS, {})
+  let cambios = 0
+  for (const f of otros) {
+    if (!f.modifiedTime || vistos[f.id] === f.modifiedTime) continue
+    const r = await pedirADrive(`${API}/files/${f.id}?alt=media`, t)
+    const datos: unknown = await r.json()
+    if (esRespaldo(datos)) {
+      const { nuevas, actualizadas, borradas } = await fusionar(datos)
+      cambios += nuevas + actualizadas + borradas
+    }
+    vistos[f.id] = f.modifiedTime
+    escribir(CLAVE_VISTOS, JSON.stringify(vistos))
+  }
+
+  const lista = otros.map((f) => ({
+    nombre: f.appProperties?.nombreDispositivo ?? 'Otro dispositivo',
+    fecha: f.modifiedTime ?? '',
+  }))
+  escribir(CLAVE_OTROS, JSON.stringify(lista))
+  cambiar({ otros: lista })
+  return cambios
+}
 
 /**
- * Huella de los datos: cuantas rutinas hay y cuando se toco la ultima. Todo cambio
- * actualiza `actualizado` de su rutina, asi que si la huella no cambia, no hay nada
- * nuevo que subir.
+ * Despues de importar, recuperar o borrar todo, lo de los otros dispositivos se
+ * vuelve a sumar entero en la proxima sincronizacion.
+ */
+export function olvidarVistos() {
+  escribir(CLAVE_VISTOS, null)
+}
+
+// --- Sincronizar ---
+
+/**
+ * Huella de los datos: cuantas rutinas y ejercicios hay, y la suma de cuando se toco
+ * cada rutina. Todo cambio actualiza `actualizado` de su rutina, asi que si la huella
+ * no cambia, no hay nada nuevo que subir.
  */
 export async function huellaDeLosDatos(): Promise<string> {
   const rutinas = await db.rutinas.toArray()
-  const ultima = rutinas.reduce((m, r) => Math.max(m, r.actualizado ?? 0), 0)
+  const suma = rutinas.reduce((t, r) => t + (r.actualizado ?? 0), 0)
   const ejercicios = await db.ejercicios.count()
-  return `${rutinas.length}:${ejercicios}:${ultima}`
+  return `${rutinas.length}:${ejercicios}:${suma}`
 }
 
 const sinDatos = (huella: string) => huella.startsWith('0:0:')
@@ -369,31 +448,46 @@ const mensajeDe = (e: unknown) =>
     ? 'Sin conexión con Drive.'
     : e instanceof Error
       ? e.message
-      : 'No se pudo respaldar.'
+      : 'No se pudo sincronizar.'
 
-export interface ResultadoRespaldo {
-  fecha: Date
-  rutinas: number
+export interface ResultadoSincronizacion {
+  /** Rutinas que llegaron, cambiaron o se borraron aca por lo de otros dispositivos. */
+  traidas: number
+  /** Rutinas que quedaron en la copia de este dispositivo, si hubo que subirla. */
+  subidas: number | null
 }
 
-let enCurso: Promise<ResultadoRespaldo> | null = null
+let enCurso: Promise<ResultadoSincronizacion> | null = null
 
-function subir(huella: string): Promise<ResultadoRespaldo> {
+function sincronizar(): Promise<ResultadoSincronizacion> {
   if (enCurso) return enCurso
 
   enCurso = (async () => {
     cambiar({ subiendo: true })
     try {
       if (!token || !tokenVigente()) throw new Error('Hace falta dar permiso de nuevo.')
-      const datos = await exportar()
-      await subirRespaldo(token.valor, datos)
-      const fecha = new Date()
-      escribir(CLAVE_ULTIMA, fecha.toISOString())
-      escribir(CLAVE_MARCA, huella)
-      // El punto ambar de Ajustes cuenta cualquier respaldo, no solo el archivo exportado.
-      marcarRespaldo()
-      cambiar({ subiendo: false, fallo: null, marca: huella, ultimo: fecha })
-      return { fecha, rutinas: datos.rutinas.length }
+      const t = token.valor
+
+      // Primero se trae, para que la copia que se sube ya incluya lo de los otros.
+      const traidas = await traerDeLosOtros(t)
+
+      const huella = await huellaDeLosDatos()
+      let subidas: number | null = null
+      const ahora = new Date()
+      if (huella !== estado.marca && !sinDatos(huella)) {
+        const datos = await exportar()
+        await subirRespaldo(t, datos)
+        escribir(CLAVE_ULTIMA, ahora.toISOString())
+        escribir(CLAVE_MARCA, huella)
+        // El punto ambar de Ajustes cuenta cualquier respaldo, no solo el archivo exportado.
+        marcarRespaldo()
+        subidas = datos.rutinas.length
+        cambiar({ marca: huella, ultimo: ahora })
+      }
+
+      escribir(CLAVE_SINCRONIZADO, ahora.toISOString())
+      cambiar({ subiendo: false, fallo: null, sincronizado: ahora })
+      return { traidas, subidas }
     } catch (e) {
       cambiar({ subiendo: false, fallo: mensajeDe(e) })
       throw e
@@ -405,10 +499,10 @@ function subir(huella: string): Promise<ResultadoRespaldo> {
 }
 
 /**
- * Respaldo de un toque. Va directo en el clic: puede abrir la ventana de Google.
- * Ese permiso dura una hora, y mientras tanto lo que anotes se sube solo.
+ * Sincroniza con un toque. Va directo en el clic: puede abrir la ventana de Google.
+ * Ese permiso dura una hora, y mientras tanto todo se sincroniza solo.
  */
-export async function respaldarAhora(): Promise<ResultadoRespaldo> {
+export async function sincronizarAhora(): Promise<ResultadoSincronizacion> {
   const permiso = pedirToken()
   cambiar({ fallo: null })
   try {
@@ -418,23 +512,26 @@ export async function respaldarAhora(): Promise<ResultadoRespaldo> {
     throw e
   }
   if (enCurso) await enCurso.catch(() => undefined)
-  return subir(await huellaDeLosDatos())
+  return sincronizar()
 }
 
-export type ResultadoAuto = 'sin-configurar' | 'sin-permiso' | 'sin-cambios' | 'subido' | 'error'
+export type ResultadoAuto = 'sin-configurar' | 'sin-permiso' | 'sin-cambios' | 'hecho' | 'error'
 
 /**
- * Sube si hay algo nuevo y queda permiso vigente. Nunca abre ventanas: sin un clic
- * el navegador las bloquea, asi que cuando falta permiso se queda esperando un toque.
+ * Sincroniza si queda permiso de un toque reciente. Nunca abre ventanas: sin un
+ * clic el navegador las bloquea, asi que cuando falta permiso se espera un toque.
+ * Sin nada propio que subir, mirar a los otros una vez por minuto basta.
  */
-export async function respaldarSiHayCambios(): Promise<ResultadoAuto> {
+export async function sincronizarSiHayPermiso(): Promise<ResultadoAuto> {
   if (!estado.configurado) return 'sin-configurar'
   if (!tokenVigente()) return 'sin-permiso'
   const huella = await huellaDeLosDatos()
-  if (huella === estado.marca || sinDatos(huella)) return 'sin-cambios'
+  const hayQueSubir = huella !== estado.marca && !sinDatos(huella)
+  const reciente = estado.sincronizado && Date.now() - estado.sincronizado.getTime() < 60_000
+  if (!hayQueSubir && reciente) return 'sin-cambios'
   try {
-    await subir(huella)
-    return 'subido'
+    await sincronizar()
+    return 'hecho'
   } catch {
     return 'error'
   }
@@ -455,25 +552,13 @@ export interface CopiaEnDrive {
 export async function listarCopias(): Promise<CopiaEnDrive[]> {
   const t = await pedirToken()
   const yo = esteDispositivo()
-  // Con drive.file la lista trae solo lo que creo esta app; el nombre lo confirma.
-  const consulta = new URLSearchParams({
-    q: 'trashed=false',
-    orderBy: 'modifiedTime desc',
-    fields: 'files(id,name,modifiedTime,appProperties)',
-    pageSize: '50',
-  })
-  const r = await pedirADrive(`${API}/files?${consulta}`, t)
-  const { files = [] } = (await r.json()) as { files?: ArchivoDrive[] }
-
-  return files
-    .filter((f) => f.name?.startsWith(PREFIJO))
-    .map((f) => ({
-      id: f.id,
-      nombre: f.appProperties?.nombreDispositivo ?? 'Copia de la 1.0',
-      fecha: new Date(f.modifiedTime ?? 0),
-      rutinas: f.appProperties?.rutinas ? Number(f.appProperties.rutinas) : null,
-      propia: f.appProperties?.dispositivo === yo.id,
-    }))
+  return (await listarArchivos(t)).map((f) => ({
+    id: f.id,
+    nombre: f.appProperties?.nombreDispositivo ?? 'Copia de la 1.0',
+    fecha: new Date(f.modifiedTime ?? 0),
+    rutinas: f.appProperties?.rutinas ? Number(f.appProperties.rutinas) : null,
+    propia: f.appProperties?.dispositivo === yo.id,
+  }))
 }
 
 export async function bajarCopia(id: string): Promise<unknown> {
@@ -485,9 +570,16 @@ export async function bajarCopia(id: string): Promise<unknown> {
 /** Olvida la conexion en este dispositivo. Lo que ya se subio a Drive no se toca. */
 export function desconectar() {
   token = null
-  escribir(CLAVE_CLIENT_ID, null)
-  escribir(CLAVE_ARCHIVO, null)
-  escribir(CLAVE_ULTIMA, null)
-  escribir(CLAVE_MARCA, null)
-  cambiar({ configurado: false, marca: null, ultimo: null, fallo: null })
+  for (const clave of [
+    CLAVE_CLIENT_ID,
+    CLAVE_ARCHIVO,
+    CLAVE_ULTIMA,
+    CLAVE_MARCA,
+    CLAVE_SINCRONIZADO,
+    CLAVE_VISTOS,
+    CLAVE_OTROS,
+  ]) {
+    escribir(clave, null)
+  }
+  cambiar({ configurado: false, marca: null, ultimo: null, sincronizado: null, otros: [], fallo: null })
 }

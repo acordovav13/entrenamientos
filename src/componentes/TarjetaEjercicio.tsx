@@ -40,6 +40,7 @@ export default function TarjetaEjercicio({ ejercicio, bloqueado, onEditar }: Pro
             </>
           )}
         </span>
+        {ejercicio.nota && <span className="nota-ejercicio">{ejercicio.nota}</span>}
       </div>
     )
   }
@@ -59,6 +60,9 @@ export default function TarjetaEjercicio({ ejercicio, bloqueado, onEditar }: Pro
           <IconoPuntos />
         </button>
       </div>
+
+      {/* Se ve antes de las series: es lo que conviene recordar al empezar el ejercicio. */}
+      {ejercicio.nota && <p className="nota-ejercicio">{ejercicio.nota}</p>}
 
       {ejercicio.tipo === 'cardio' ? (
         <div className="series">

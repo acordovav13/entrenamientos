@@ -21,6 +21,8 @@ export interface Ejercicio {
   distanciaKm?: number
   /** Solo cardio. */
   hecho: boolean
+  /** Nota libre, por ejemplo "molestia en el hombro". */
+  nota?: string
 }
 
 export interface Rutina {
@@ -31,8 +33,17 @@ export interface Rutina {
   cerrada: boolean
   /** Orden dentro del dia, para permitir varias rutinas diarias. */
   orden: number
-  /** Interno, para resolver conflictos cuando llegue la sincronizacion con Drive. */
+  /**
+   * Interno: cuando se toco por ultima vez la rutina o cualquiera de sus ejercicios.
+   * Al sincronizar, entre dos versiones de la misma rutina gana la mas reciente.
+   */
   actualizado: number
+}
+
+/** Rutina borrada. Viaja a los otros dispositivos para que la borren tambien. */
+export interface Borrado {
+  id: string
+  cuando: number
 }
 
 /** Lo que el autocompletado sabe de un ejercicio ya usado antes. */
@@ -45,4 +56,6 @@ export interface Sugerencia {
   /** Cuantas veces se ha registrado, para ordenar las sugerencias. */
   veces: number
   ultimaFecha: string
+  /** La nota de la ultima vez, para verla justo al volver a agregarlo. */
+  ultimaNota?: string
 }

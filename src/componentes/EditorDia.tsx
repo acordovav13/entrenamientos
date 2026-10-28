@@ -171,6 +171,7 @@ export default function EditorDia({ fecha }: Props) {
                 series: series.map((s, i) => ({ ...s, hecha: editando.series[i]?.hecha ?? false })),
                 tiempoMin: datos.tiempoMin,
                 distanciaKm: datos.distanciaKm,
+                nota: datos.nota,
               })
               setEditando(null)
             }}

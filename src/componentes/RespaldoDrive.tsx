@@ -8,14 +8,15 @@ import {
   guardarClientId,
   listarCopias,
   nombreArchivo,
-  respaldarAhora,
+  olvidarVistos,
+  sincronizarAhora,
   type CopiaEnDrive,
 } from '../drive'
 import { contar } from '../formato'
 import { useRespaldo } from '../useRespaldo'
 
 const cuandoTexto = (d: Date | null) => {
-  if (!d) return 'Nunca'
+  if (!d || Number.isNaN(d.getTime())) return 'Nunca'
   const dias = Math.floor((Date.now() - d.getTime()) / 86_400_000)
   if (dias === 0) return `Hoy, ${d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}`
   if (dias === 1) return 'Ayer'
@@ -36,20 +37,25 @@ export default function RespaldoDrive() {
     guardarClientId(campo)
     setAviso(
       estaConfigurado()
-        ? { texto: 'ID guardado. Ya puedes respaldar.' }
+        ? { texto: 'ID guardado. Ya puedes sincronizar.' }
         : { texto: 'El ID quedó vacío.', error: true },
     )
   }
 
   // Los dos botones llaman a Drive sin un await antes: la ventana de Google tiene
   // que abrirse dentro del clic, o el navegador la bloquea por emergente.
-  const alSubir = async () => {
+  const alSincronizar = async () => {
     setAviso(null)
     try {
-      const { rutinas } = await respaldarAhora()
-      setAviso({ texto: `Listo: ${contar(rutinas, 'rutina')} en tu Drive.` })
+      const { traidas } = await sincronizarAhora()
+      setAviso({
+        texto:
+          traidas > 0
+            ? `Listo: ${contar(traidas, 'rutina')} al día con tus otros dispositivos.`
+            : 'Listo: todo al día.',
+      })
     } catch (e) {
-      error(e, 'No se pudo subir.')
+      error(e, 'No se pudo sincronizar.')
     }
   }
 
@@ -59,7 +65,7 @@ export default function RespaldoDrive() {
     try {
       const lista = await listarCopias()
       if (lista.length) setCopias(lista)
-      else setAviso({ texto: 'En tu Drive todavía no hay ningún respaldo.', error: true })
+      else setAviso({ texto: 'En tu Drive todavía no hay ninguna copia.', error: true })
     } catch (e) {
       error(e, 'No se pudo leer Drive.')
     } finally {
@@ -74,6 +80,7 @@ export default function RespaldoDrive() {
     setBajando(true)
     try {
       const n = await importar(await bajarCopia(copia.id))
+      olvidarVistos()
       setAviso({ texto: `Listo: se recuperó ${cual}, con ${contar(n, 'rutina')}.` })
     } catch (e) {
       error(e, 'No se pudo bajar.')
@@ -85,10 +92,11 @@ export default function RespaldoDrive() {
   if (!respaldo.configurado) {
     return (
       <div className="grupo">
-        <h2>Respaldo en Google Drive</h2>
+        <h2>Google Drive</h2>
         <p>
-          Falta un paso que solo puedes hacer tú: crear un ID de cliente en Google Cloud con
-          tu propia cuenta. Cuando lo tengas, pégalo acá. Se guarda solo en este dispositivo.
+          Para respaldar y sincronizar entre tus dispositivos falta un paso que solo puedes
+          hacer tú: crear un ID de cliente en Google Cloud con tu propia cuenta. Cuando lo
+          tengas, pégalo acá. Se guarda solo en este dispositivo.
         </p>
         <div className="campo">
           <label htmlFor="client-id">ID de cliente de Google</label>
@@ -114,31 +122,47 @@ export default function RespaldoDrive() {
   }
 
   const ocupado = respaldo.subiendo || bajando
-  // Si el automatico fallo, aqui se dice por que.
+  // Si lo automatico fallo con algo pendiente, aqui se dice por que.
   const avisoVisible =
     aviso ??
     (respaldo.fallo && respaldo.pendiente
-      ? { texto: `No se pudo respaldar. ${respaldo.fallo}`, error: true }
+      ? { texto: `No se pudo sincronizar. ${respaldo.fallo}`, error: true }
       : null)
 
   return (
     <div className="grupo">
-      <h2>Respaldo en Google Drive</h2>
+      <h2>Google Drive</h2>
 
       <div className="dato">
-        <span>Último respaldo en Drive</span>
-        <strong className={respaldo.ultimo ? 'si' : 'no'}>{cuandoTexto(respaldo.ultimo)}</strong>
+        <span>Última sincronización</span>
+        <strong className={respaldo.sincronizado ?? respaldo.ultimo ? 'si' : 'no'}>
+          {cuandoTexto(respaldo.sincronizado ?? respaldo.ultimo)}
+        </strong>
       </div>
       <div className="dato">
         <span>Estado</span>
         {respaldo.subiendo ? (
-          <strong>Subiendo…</strong>
+          <strong>Sincronizando…</strong>
         ) : respaldo.pendiente ? (
-          <strong className="no">Cambios sin respaldar</strong>
+          <strong className="no">Cambios sin subir</strong>
         ) : (
           <strong className="si">Al día</strong>
         )}
       </div>
+      {respaldo.sincronizado &&
+        (respaldo.otros.length === 0 ? (
+          <div className="dato">
+            <span>Otros dispositivos</span>
+            <strong>Ninguno todavía</strong>
+          </div>
+        ) : (
+          respaldo.otros.map((o, i) => (
+            <div className="dato" key={i}>
+              <span>{o.nombre}</span>
+              <strong className="tenue">subió {cuandoTexto(new Date(o.fecha)).toLowerCase()}</strong>
+            </div>
+          ))
+        ))}
 
       {avisoVisible && (
         <div className={`aviso${avisoVisible.error ? ' error' : ''}`} style={{ marginBottom: 12 }}>
@@ -167,8 +191,8 @@ export default function RespaldoDrive() {
         </div>
       ) : (
         <>
-          <button className="btn" onClick={alSubir} disabled={ocupado}>
-            {respaldo.subiendo ? 'Subiendo…' : 'Respaldar ahora en Drive'}
+          <button className="btn" onClick={alSincronizar} disabled={ocupado}>
+            {respaldo.subiendo ? 'Sincronizando…' : 'Sincronizar ahora'}
           </button>
           <button
             className="btn secundario"
@@ -183,15 +207,16 @@ export default function RespaldoDrive() {
 
       <p className="nota" style={{ marginTop: 10 }}>
         Este dispositivo guarda su copia en tu Drive como «{nombreArchivo()}», en Mi
-        unidad. Cada dispositivo tiene la suya, así que no se pisan. La app solo ve los
-        archivos que ella misma crea, y recuperar reemplaza todo lo de este dispositivo.
+        unidad, y al sincronizar trae lo de tus otros dispositivos. Si una rutina cambió en
+        dos, queda la versión más reciente, y lo que borras se borra en todos. Recuperar
+        reemplaza todo lo de este dispositivo por la copia que elijas.
       </p>
 
       <button
         className="btn peligro"
         style={{ marginTop: 12 }}
         onClick={() => {
-          if (!confirm('Se olvida la conexión con Drive en este dispositivo. El respaldo que ya subiste no se borra.')) return
+          if (!confirm('Se olvida la conexión con Drive en este dispositivo. Lo que ya subiste no se borra.')) return
           desconectar()
           setCampo('')
           setCopias(null)

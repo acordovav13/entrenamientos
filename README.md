@@ -41,11 +41,11 @@ src/
 ## Dónde viven los datos
 
 En IndexedDB, dentro del navegador de cada dispositivo. No hay servidor propio.
-Teléfono y PC son historiales separados: la app respalda, no sincroniza.
 
-- **Google Drive** (Ajustes → Respaldo en Google Drive): cada dispositivo sube su
-  copia a su propio archivo, `entrenamientos-respaldo (<dispositivo>).json`, en la
-  raíz de Mi unidad. Necesita un ID de cliente de OAuth creado en Google Cloud.
+- **Google Drive** (Ajustes → Google Drive): cada dispositivo sube su copia a su propio
+  archivo, `entrenamientos-respaldo (<dispositivo>).json`, en la raíz de Mi unidad, y
+  al sincronizar suma las copias de los otros: por rutina gana la versión más reciente,
+  y lo borrado se borra en todos. Necesita un ID de cliente de OAuth creado en Google Cloud.
 - **Archivo** (Ajustes → Exportar / Importar): un JSON para guardar donde quieras.
 
 Las decisiones de diseño y el plan por fases están en [CLAUDE.md](CLAUDE.md).
